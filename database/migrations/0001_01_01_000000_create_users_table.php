@@ -17,6 +17,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('role')->default('warga'); // warga, bank_sampah, umkm, pembeli
+            $table->string('phone')->nullable();
+            $table->text('address')->nullable();
+            $table->integer('point_balance')->default(0);
+            $table->decimal('cash_balance', 12, 2)->default(0);
             $table->rememberToken();
             $table->timestamps();
         });
