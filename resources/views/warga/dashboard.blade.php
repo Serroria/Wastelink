@@ -259,24 +259,24 @@
             </h3>
             <button onclick="closeTrackingModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
         </div>
-        
+
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto">
             {{-- Kiri: Timeline Progress --}}
             <div class="space-y-4">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Aliran Pengiriman</h4>
-                
+
                 {{-- Vertical Timeline Stepper --}}
                 <div class="relative pl-6 border-l-2 border-slate-100 space-y-5 ml-3" id="timelineContainer">
                     {{-- Injected dynamically via JS --}}
                 </div>
             </div>
-            
+
             {{-- Kanan: Peta Live Route --}}
             <div class="space-y-4 flex flex-col">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Rute Perjalanan Sampah</h4>
                 <div id="trackingMap" class="w-full h-64 rounded-2xl border border-slate-100 relative z-10 shadow-inner"></div>
                 <div class="text-[10px] text-slate-400 leading-relaxed font-semibold mt-1 flex items-center gap-1">
-                    <i class="bi bi-info-circle text-emerald-600"></i> 
+                    <i class="bi bi-info-circle text-emerald-600"></i>
                     <span id="trackingDistanceText">Menghitung rute...</span>
                 </div>
             </div>
@@ -295,9 +295,9 @@ var qrInstance = null;
 function openVoucherQR(code, name) {
     document.getElementById('modalVoucherName').textContent = name;
     document.getElementById('modalVoucherCode').textContent = code;
-    
+
     document.getElementById('qrcode').innerHTML = '';
-    
+
     qrInstance = new QRCode(document.getElementById('qrcode'), {
         text: code,
         width: 160,
@@ -321,59 +321,153 @@ let citizenMarker = null;
 let bankMarker = null;
 let routePolyline = null;
 
+// function openTrackingModal(button) {
+//     const depositJson = button.getAttribute('data-deposit');
+//     const deposit = JSON.parse(depositJson);
+//     console.log("Tracking deposit:", deposit);
+
+//     document.getElementById('trackingModal').classList.remove('hidden');
+
+//     const timeline = document.getElementById('timelineContainer');
+//     timeline.innerHTML = '';
+
+//     const createdAt = new Date(deposit.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+//     const verifiedAt = deposit.updated_at ? new Date(deposit.updated_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+
+//     const isJemput = deposit.collection_method === 'jemput';
+//     const isApproved = deposit.status === 'approved';
+//     const isPending = deposit.status === 'pending';
+//     const isRejected = deposit.status === 'rejected';
+
+//     let steps = [
+//         {
+//             title: 'Formulir Setoran Terkirim',
+//             desc: `Warga mengajukan setoran sampah via ${isJemput ? 'Jemput Kolektif' : 'Antar Mandiri'}.`,
+//             time: createdAt,
+//             completed: true,
+//             active: isPending
+//         },
+//         {
+//             title: isJemput ? 'Petugas Menuju Lokasi' : 'Warga Membawa Sampah',
+//             desc: isJemput ? 'Kurir bank sampah sedang berangkat menjemput ke titik koordinat Anda.' : 'Silakan antarkan sampah Anda ke drop-off point Bank Sampah Lestari.',
+//             time: isPending ? 'Sedang Berjalan' : verifiedAt,
+//             completed: !isPending,
+//             active: isPending
+//         },
+//         {
+//             title: 'Tiba & Ditimbang Aktual',
+//             desc: 'Sampah berhasil diverifikasi, dipilah, dan ditimbang riil oleh operator bank sampah.',
+//             time: isApproved ? verifiedAt : '',
+//             completed: isApproved,
+//             active: isApproved
+//         },
+//         {
+//             title: 'Poin Dompet Dikreditkan',
+//             desc: `Tabungan poin +${deposit.total_points.toLocaleString('id-ID')} Poin berhasil masuk ke dompet elektronik warga.`,
+//             time: isApproved ? verifiedAt : '',
+//             completed: isApproved,
+//             active: isApproved
+//         },
+//         {
+//             title: 'Didistribusikan ke Industri Daur Ulang',
+//             desc: 'Sampah diangkut oleh mitra industri peleburan untuk dilebur menjadi bahan baku produk baru!',
+//             time: isApproved ? 'Selesai' : '',
+//             completed: isApproved,
+//             active: isApproved
+//         }
+//     ];
+
+//     if (isRejected) {
+//         steps[2] = {
+//             title: 'Pengajuan Ditolak',
+//             desc: 'Pengajuan ditolak oleh petugas karena berat timbangan tidak sesuai atau bukan sampah terpilah.',
+//             time: verifiedAt,
+//             completed: true,
+//             active: true,
+//             failed: true
+//         };
+//     }
+
+//     steps.forEach((step, idx) => {
+//         let stepHtml = `
+//             <div class="relative">
+//                 <div class="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full flex items-center justify-center border-2 text-[8px] font-bold
+//                     ${step.failed ? 'bg-red-500 border-red-500 text-white' :
+//                       (step.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200')}">
+//                     ${step.failed ? '✕' : (step.completed ? '✓' : '')}
+//                 </div>
+//                 <div>
+//                     <h5 class="text-xs font-bold ${step.active ? 'text-slate-800' : 'text-slate-500'}">${step.title}</h5>
+//                     <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">${step.desc}</p>
+//                     ${step.time ? `<span class="text-[9px] font-bold text-emerald-600 block mt-1">${step.time}</span>` : ''}
+//                 </div>
+//             </div>
+//         `;
+//         timeline.innerHTML += stepHtml;
+//     });
+
+//     setTimeout(() => {
+//         initTrackingMap(deposit);
+//     }, 150);
+// }
+
 function openTrackingModal(button) {
     const depositJson = button.getAttribute('data-deposit');
     const deposit = JSON.parse(depositJson);
-    console.log("Tracking deposit:", deposit);
-    
+
     document.getElementById('trackingModal').classList.remove('hidden');
-    
+
     const timeline = document.getElementById('timelineContainer');
     timeline.innerHTML = '';
-    
+
     const createdAt = new Date(deposit.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     const verifiedAt = deposit.updated_at ? new Date(deposit.updated_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-    
+
     const isJemput = deposit.collection_method === 'jemput';
-    const isApproved = deposit.status === 'approved';
-    const isPending = deposit.status === 'pending';
-    const isRejected = deposit.status === 'rejected';
-    
+    const status = deposit.status;
+
+    // Logika tahapan hierarki status
+    const passedOtw = ['menuju_lokasi', 'ditimbang', 'approved', 'didistribusikan'].includes(status);
+    const passedDitimbang = ['ditimbang', 'approved', 'didistribusikan'].includes(status);
+    const passedApproved = ['approved', 'didistribusikan'].includes(status);
+    const passedDistribusi = ['didistribusikan'].includes(status);
+    const isRejected = status === 'rejected';
+
     let steps = [
         {
             title: 'Formulir Setoran Terkirim',
             desc: `Warga mengajukan setoran sampah via ${isJemput ? 'Jemput Kolektif' : 'Antar Mandiri'}.`,
             time: createdAt,
             completed: true,
-            active: isPending
+            active: status === 'pending'
         },
         {
             title: isJemput ? 'Petugas Menuju Lokasi' : 'Warga Membawa Sampah',
             desc: isJemput ? 'Kurir bank sampah sedang berangkat menjemput ke titik koordinat Anda.' : 'Silakan antarkan sampah Anda ke drop-off point Bank Sampah Lestari.',
-            time: isPending ? 'Sedang Berjalan' : verifiedAt,
-            completed: !isPending,
-            active: isPending
+            time: passedOtw ? verifiedAt : (status === 'pending' ? 'Menunggu...' : ''),
+            completed: passedOtw,
+            active: status === 'menuju_lokasi' || (status === 'pending' && !isJemput)
         },
         {
             title: 'Tiba & Ditimbang Aktual',
             desc: 'Sampah berhasil diverifikasi, dipilah, dan ditimbang riil oleh operator bank sampah.',
-            time: isApproved ? verifiedAt : '',
-            completed: isApproved,
-            active: isApproved
+            time: passedDitimbang ? verifiedAt : '',
+            completed: passedDitimbang,
+            active: status === 'ditimbang'
         },
         {
             title: 'Poin Dompet Dikreditkan',
-            desc: `Tabungan poin +${deposit.total_points.toLocaleString('id-ID')} Poin berhasil masuk ke dompet elektronik warga.`,
-            time: isApproved ? verifiedAt : '',
-            completed: isApproved,
-            active: isApproved
+            desc: `Tabungan poin +${deposit.total_points ? deposit.total_points.toLocaleString('id-ID') : '0'} Poin berhasil masuk ke dompet elektronik warga.`,
+            time: passedApproved ? verifiedAt : '',
+            completed: passedApproved,
+            active: status === 'approved'
         },
         {
             title: 'Didistribusikan ke Industri Daur Ulang',
             desc: 'Sampah diangkut oleh mitra industri peleburan untuk dilebur menjadi bahan baku produk baru!',
-            time: isApproved ? 'Selesai' : '',
-            completed: isApproved,
-            active: isApproved
+            time: passedDistribusi ? 'Selesai' : '',
+            completed: passedDistribusi,
+            active: status === 'didistribusikan'
         }
     ];
 
@@ -386,13 +480,15 @@ function openTrackingModal(button) {
             active: true,
             failed: true
         };
+        // Potong array (buang poin dan distribusi karena gagal ditimbang)
+        steps = steps.slice(0, 3);
     }
 
     steps.forEach((step, idx) => {
         let stepHtml = `
             <div class="relative">
                 <div class="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full flex items-center justify-center border-2 text-[8px] font-bold
-                    ${step.failed ? 'bg-red-500 border-red-500 text-white' : 
+                    ${step.failed ? 'bg-red-500 border-red-500 text-white' :
                       (step.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200')}">
                     ${step.failed ? '✕' : (step.completed ? '✓' : '')}
                 </div>
@@ -414,7 +510,7 @@ function openTrackingModal(button) {
 function initTrackingMap(deposit) {
     var bankLat = -6.3024;
     var bankLng = 107.3065;
-    
+
     var citizenLat = parseFloat(deposit.latitude) || -6.3000;
     var citizenLng = parseFloat(deposit.longitude) || 107.3000;
 
@@ -446,7 +542,7 @@ function initTrackingMap(deposit) {
 
     citizenMarker = L.marker([citizenLat, citizenLng], { icon: citizenIcon }).addTo(trackingMap)
         .bindPopup("<b>Rumah Anda (Titik Jemput)</b>");
-    
+
     bankMarker = L.marker([bankLat, bankLng], { icon: bankIcon }).addTo(trackingMap)
         .bindPopup("<b>Bank Sampah Lestari (Pusat)</b>");
 
@@ -459,7 +555,7 @@ function initTrackingMap(deposit) {
     var distance = (trackingMap.distance([citizenLat, citizenLng], [bankLat, bankLng]) / 1000).toFixed(2);
     document.getElementById('trackingDistanceText').innerHTML = `<i class="bi bi-truck text-emerald-600"></i> Jarak ke Bank Sampah: <strong>${distance} km</strong>`;
 
-    if (deposit.status === 'pending' && deposit.collection_method === 'jemput') {
+  if (['pending', 'menuju_lokasi'].includes(deposit.status) && deposit.collection_method === 'jemput') {
         var courierIcon = L.divIcon({
             html: '<div class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 text-white border-2 border-white shadow-md text-sm">🚚</div>',
             className: 'custom-div-icon',
@@ -472,7 +568,7 @@ function initTrackingMap(deposit) {
 
         courierMarker = L.marker([courierLat, courierLng], { icon: courierIcon }).addTo(trackingMap)
             .bindPopup("<b>Kurir Penjemput (Dalam Perjalanan)</b>");
-        
+
         document.getElementById('trackingDistanceText').innerHTML += ` | Kurir sedang menuju lokasi Anda.`;
     }
 

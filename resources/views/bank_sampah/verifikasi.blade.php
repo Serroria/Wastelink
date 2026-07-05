@@ -18,7 +18,7 @@
     @foreach($deposits as $deposit)
     <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
         <div class="flex flex-col lg:flex-row justify-between gap-6">
-            
+
             {{-- DATA PENYETORAN --}}
             <div class="flex-1 space-y-4">
                 <div class="flex items-center gap-3">
@@ -78,13 +78,13 @@
             </div>
 
             {{-- FORM TINDAKAN (OPERATOR) --}}
-            @if($deposit->status === 'pending')
+            {{-- @if($deposit->status === 'pending')
             <div class="w-full lg:w-80 bg-slate-50/50 border border-slate-100 rounded-3xl p-5 shrink-0 space-y-4">
                 <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">⚖️ Input Timbangan Aktual</h4>
-                
+
                 <form action="{{ route('bank-sampah.verifikasi.process', $deposit->id) }}" method="POST" class="space-y-3">
                     @csrf
-                    
+
                     @foreach($wasteTypes as $type)
                     @php
                         $existingWeight = isset($details[$type->id]) ? $details[$type->id] : 0;
@@ -114,6 +114,87 @@
                     </div>
                 </form>
             </div>
+            @endif --}}
+
+            {{-- FORM TINDAKAN (OPERATOR) BERTAHAP --}}
+            @if(in_array($deposit->status, ['pending', 'menuju_lokasi', 'ditimbang', 'approved']))
+            <div class="w-full lg:w-80 bg-slate-50/50 border border-slate-100 rounded-3xl p-5 shrink-0 space-y-4">
+                <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">⚙️ Tindakan Operator</h4>
+
+                <form action="{{ route('bank-sampah.verifikasi.process', $deposit->id) }}" method="POST" class="space-y-3">
+                    @csrf
+
+                    {{-- TAHAP 1: OTW (Khusus metode jemput) --}}
+                    @if($deposit->status === 'pending' && $deposit->collection_method === 'jemput')
+                        <div class="p-3 bg-amber-50 border border-amber-100 rounded-xl mb-3 text-center">
+                            <p class="text-xs text-amber-700 font-semibold mb-2">Tugaskan Kurir Menjemput Sampah?</p>
+                            <button type="submit" name="action" value="otw" class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-[10px] transition-all shadow-sm">
+                                🚚 Kurir Menuju Lokasi
+                            </button>
+                        </div>
+                    @endif
+
+                    {{-- TAHAP 2 & 3: INPUT TIMBANGAN & REVISI --}}
+                    @if(in_array($deposit->status, ['pending', 'menuju_lokasi', 'ditimbang']))
+                        @foreach($wasteTypes as $type)
+                        @php
+                            $existingWeight = isset($details[$type->id]) ? $details[$type->id] : 0;
+                        @endphp
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-xs font-semibold text-slate-600 w-24 truncate">{{ $type->icon }} {{ $type->name }}</span>
+                            <input type="number" name="weights[{{ $type->id }}]" class="w-20 px-3 py-1.5 border border-slate-200 rounded-lg text-xs text-center focus:outline-none focus:border-emerald-500 bg-white" value="{{ $existingWeight }}" min="0" step="0.1" @if($deposit->status === 'approved') disabled @endif>
+                            <span class="text-xs text-slate-400 font-bold">kg</span>
+                        </div>
+                        @endforeach
+
+                        <div class="pt-2 border-t border-slate-100">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Catatan Verifikasi</label>
+                            <textarea name="notes" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-emerald-500 bg-white" placeholder="Sampah bersih terpilah...">{{ $deposit->notes }}</textarea>
+                        </div>
+
+                        {{-- Tombol untuk Tahap 2: Simpan Timbangan --}}
+                        @if(in_array($deposit->status, ['pending', 'menuju_lokasi']))
+                            <div class="grid grid-cols-2 gap-2 pt-2">
+                                <button type="submit" name="action" value="timbang" class="py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-[10px] transition-all shadow-sm">
+                                    ⚖️ Simpan Timbangan
+                                </button>
+                                <button type="submit" name="action" value="reject" class="py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-[10px] transition-all shadow-sm">
+                                    ✕ Tolak
+                                </button>
+                            </div>
+                        @endif
+
+                        {{-- Tombol untuk Tahap 3: Beri Poin --}}
+                        @if($deposit->status === 'ditimbang')
+                            <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl space-y-2 text-center mt-3">
+                                <p class="text-[10px] text-emerald-700 font-bold uppercase tracking-widest">Estimasi Poin</p>
+                                <p class="text-lg font-black text-emerald-600">{{ number_format($deposit->total_points, 0, ',', '.') }} Poin</p>
+
+                                <button type="submit" name="action" value="approve" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] transition-all shadow-sm">
+                                    💰 Setujui & Kreditkan Poin
+                                </button>
+                                <button type="submit" name="action" value="revise" class="w-full py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-[10px] transition-all shadow-sm">
+                                    Simpan Perubahan Timbangan (Revisi)
+                                </button>
+                            </div>
+                        @endif
+                    @endif
+
+                    {{-- TAHAP 4: DISTRIBUSI KE PABRIK --}}
+                    @if($deposit->status === 'approved')
+                        <div class="p-4 bg-purple-50 border border-purple-100 rounded-xl text-center space-y-3">
+                            <i class="bi bi-check-circle-fill text-3xl text-purple-600"></i>
+                            <div>
+                                <p class="text-xs text-purple-800 font-bold">Poin berhasil dikreditkan!</p>
+                                <p class="text-[10px] text-purple-600 mt-1">Langkah selanjutnya adalah mendistribusikan sampah warga ke industri.</p>
+                            </div>
+                            <button type="submit" name="action" value="distribusi" class="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-[10px] transition-all shadow-sm">
+                                ♻️ Distribusikan ke Pabrik
+                            </button>
+                        </div>
+                    @endif
+                </form>
+            </div>
             @endif
 
         </div>
@@ -140,7 +221,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 // Gunakan koordinat riil yang tersimpan, fallback ke pusat Karawang
                 var lat = {{ $deposit->latitude ?? -6.3024 }};
                 var lng = {{ $deposit->longitude ?? 107.3065 }};
-                
+
                 var map = L.map(mapId, { scrollWheelZoom: false }).setView([lat, lng], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; OpenStreetMap contributors'
@@ -152,7 +233,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     iconSize: [30, 30],
                     iconAnchor: [15, 30]
                 });
-                
+
                 L.marker([lat, lng], { icon: pinIcon }).addTo(map)
                     .bindPopup("<b>Lokasi Jemput Warga:</b><br>{{ $deposit->user->name ?? 'Warga' }}<br><a href='https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lng + "' target='_blank' class='block text-center mt-2 py-1 bg-emerald-600 text-white rounded text-[9px] font-bold shadow-sm'><i class='bi bi-send-fill text-[8px]'></i> Buka Petunjuk Rute</a>");
             })();

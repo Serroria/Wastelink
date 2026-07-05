@@ -61,7 +61,22 @@ class WargaController extends Controller
      */
     public function setor()
     {
-        // Pastikan tipe sampah tambahan tersedia
+        //tipe daur ulang
+        \App\Models\WasteType::firstOrCreate(
+            ['name' => 'Plastik (PET/HDPE)'],
+            ['icon' => '🧴', 'points_per_kg' => 100, 'price_per_kg' => 1000]
+        );
+        \App\Models\WasteType::firstOrCreate(
+            ['name' => 'Kertas & Kardus'],
+            ['icon' => '📦', 'points_per_kg' => 80, 'price_per_kg' => 800]
+        );
+        \App\Models\WasteType::firstOrCreate(
+            ['name' => 'Logam & Kaleng'],
+            ['icon' => '🥫', 'points_per_kg' => 150, 'price_per_kg' => 1500]
+        );
+
+        //organik
+
         \App\Models\WasteType::firstOrCreate(
             ['name' => 'Organik (Sisa Makanan & Dapur)'],
             [
@@ -70,6 +85,8 @@ class WargaController extends Controller
                 'price_per_kg' => 500,
             ]
         );
+
+        //residu
         \App\Models\WasteType::firstOrCreate(
             ['name' => 'Residu (Popok, Pembalut, Tissue)'],
             [
@@ -167,6 +184,9 @@ class WargaController extends Controller
     public function redeemProduct(Request $request, $productId)
     {
         $user = Auth::user();
+        if (! $user instanceof User) {
+            return redirect()->route('login');
+        }
         $product = UmkmProduct::findOrFail($productId);
 
         if ($user->point_balance < $product->points_cost) {

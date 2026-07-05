@@ -42,12 +42,35 @@ class BankSampahController extends Controller
     /**
      * Halaman verifikasi deposit warga.
      */
-    public function verifikasi()
+    // public function verifikasi()
+    // {
+    //     $deposits = WasteDeposit::with('user')
+    //         ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+    //         ->orderByDesc('created_at')
+    //         ->get();
+    //     $wasteTypes = WasteType::all()->keyBy('id');
+
+    //     return view('bank_sampah.verifikasi', compact('deposits', 'wasteTypes'));
+    // }
+ public function verifikasi()
     {
+        // Menggunakan CASE WHEN agar kompatibel dengan PostgreSQL (Supabase)
         $deposits = WasteDeposit::with('user')
-            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+            ->orderByRaw("
+                CASE status
+                    WHEN 'pending' THEN 1
+                    WHEN 'menuju_lokasi' THEN 2
+                    WHEN 'ditimbang' THEN 3
+                    WHEN 'approved' THEN 4
+                    WHEN 'revised' THEN 5
+                    WHEN 'rejected' THEN 6
+                    WHEN 'didistribusikan' THEN 7
+                    ELSE 8
+                END
+            ")
             ->orderByDesc('created_at')
             ->get();
+
         $wasteTypes = WasteType::all()->keyBy('id');
 
         return view('bank_sampah.verifikasi', compact('deposits', 'wasteTypes'));
@@ -56,64 +79,64 @@ class BankSampahController extends Controller
     /**
      * Proses verifikasi (approve/reject/revise) deposit.
      */
-    public function processDeposit(Request $request, $id)
-    {
-        $deposit = WasteDeposit::findOrFail($id);
-        $action = $request->input('action'); // approve, reject, revise
-        $operator = Auth::user();
-        $wasteTypes = WasteType::all()->keyBy('id');
+    // public function processDeposit(Request $request, $id)
+    // {
+    //     $deposit = WasteDeposit::findOrFail($id);
+    //     $action = $request->input('action'); // approve, reject, revise
+    //     $operator = Auth::user();
+    //     $wasteTypes = WasteType::all()->keyBy('id');
 
-        if ($action === 'approve' || $action === 'revise') {
-            // Hitung ulang berdasarkan berat aktual dari operator
-            $weightDetails = [];
-            $totalPoints = 0;
+    //     if ($action === 'approve' || $action === 'revise') {
+    //         // Hitung ulang berdasarkan berat aktual dari operator
+    //         $weightDetails = [];
+    //         $totalPoints = 0;
 
-            foreach ($request->input('weights', []) as $typeId => $weight) {
-                $weight = floatval($weight);
-                if ($weight > 0) {
-                    $weightDetails[$typeId] = $weight;
-                    if (isset($wasteTypes[$typeId])) {
-                        $totalPoints += (int)($weight * $wasteTypes[$typeId]->points_per_kg);
-                    }
-                }
-            }
+    //         foreach ($request->input('weights', []) as $typeId => $weight) {
+    //             $weight = floatval($weight);
+    //             if ($weight > 0) {
+    //                 $weightDetails[$typeId] = $weight;
+    //                 if (isset($wasteTypes[$typeId])) {
+    //                     $totalPoints += (int)($weight * $wasteTypes[$typeId]->points_per_kg);
+    //                 }
+    //             }
+    //         }
 
-            $deposit->update([
-                'collector_id' => $operator->id,
-                'status' => $action === 'approve' ? 'approved' : 'revised',
-                'weight_details' => json_encode($weightDetails),
-                'total_points' => $totalPoints,
-                'notes' => $request->input('notes', $deposit->notes),
-            ]);
+    //         $deposit->update([
+    //             'collector_id' => $operator->id,
+    //             'status' => $action === 'approve' ? 'approved' : 'revised',
+    //             'weight_details' => json_encode($weightDetails),
+    //             'total_points' => $totalPoints,
+    //             'notes' => $request->input('notes', $deposit->notes),
+    //         ]);
 
-            // Tambah poin ke saldo warga
-            $warga = $deposit->user;
-            $warga->point_balance += $totalPoints;
-            $warga->save();
+    //         // Tambah poin ke saldo warga
+    //         $warga = $deposit->user;
+    //         $warga->point_balance += $totalPoints;
+    //         $warga->save();
 
-            // Update statistik
-            $totalWeight = array_sum($weightDetails);
-            $stats = SystemStat::first();
-            if ($stats) {
-                $stats->total_landfill_saved += $totalWeight;
-                $stats->total_co2_saved += $totalWeight * 2.5;
-                $stats->save();
-            }
+    //         // Update statistik
+    //         $totalWeight = array_sum($weightDetails);
+    //         $stats = SystemStat::first();
+    //         if ($stats) {
+    //             $stats->total_landfill_saved += $totalWeight;
+    //             $stats->total_co2_saved += $totalWeight * 2.5;
+    //             $stats->save();
+    //         }
 
-        } elseif ($action === 'reject') {
-            $deposit->update([
-                'collector_id' => $operator->id,
-                'status' => 'rejected',
-                'notes' => $request->input('notes', 'Sampah tidak memenuhi syarat.'),
-            ]);
-        }
+    //     } elseif ($action === 'reject') {
+    //         $deposit->update([
+    //             'collector_id' => $operator->id,
+    //             'status' => 'rejected',
+    //             'notes' => $request->input('notes', 'Sampah tidak memenuhi syarat.'),
+    //         ]);
+    //     }
 
-        return redirect()->route('bank-sampah.verifikasi')->with('success', 'Deposit berhasil diproses.');
-    }
+    //     return redirect()->route('bank-sampah.verifikasi')->with('success', 'Deposit berhasil diproses.');
+    // }
 
-    /**
-     * Halaman manajemen stok & listing B2B.
-     */
+    // /**
+    //  * Halaman manajemen stok & listing B2B.
+    //  */
     public function stok()
     {
         $wasteTypes = WasteType::all();
@@ -132,6 +155,95 @@ class BankSampahController extends Controller
         }
 
         return view('bank_sampah.stok', compact('wasteTypes', 'listings', 'stokPerType'));
+    }
+    public function processDeposit(Request $request, $id)
+    {
+        $deposit = WasteDeposit::findOrFail($id);
+        $action = $request->input('action');
+        $operator = Auth::user();
+        $wasteTypes = WasteType::all()->keyBy('id');
+
+        // TAHAP 1: Kurir Menuju Lokasi
+        if ($action === 'otw') {
+            $deposit->update([
+                'collector_id' => $operator->id,
+                'status' => 'menuju_lokasi'
+            ]);
+            return back()->with('success', 'Status diperbarui: Kurir sedang menuju lokasi warga.');
+        }
+
+        // TAHAP 2: Simpan Timbangan Aktual (Belum kasih poin)
+        if ($action === 'timbang' || $action === 'revise') {
+            $weightDetails = [];
+            $totalPoints = 0;
+
+            foreach ($request->input('weights', []) as $typeId => $weight) {
+                $weight = floatval($weight);
+                if ($weight > 0) {
+                    $weightDetails[$typeId] = $weight;
+                    if (isset($wasteTypes[$typeId])) {
+                        $totalPoints += (int)($weight * $wasteTypes[$typeId]->points_per_kg);
+                    }
+                }
+            }
+
+            $deposit->update([
+                'collector_id' => $operator->id,
+                'status' => $action === 'timbang' ? 'ditimbang' : 'revised',
+                'weight_details' => json_encode($weightDetails),
+                'total_points' => $totalPoints,
+                'notes' => $request->input('notes', $deposit->notes),
+            ]);
+            // Jika status direvisi dari ditimbang, kita kembalikan ke ditimbang agar form setujui tetap muncul
+            if ($action === 'revise') {
+                $deposit->update(['status' => 'ditimbang']);
+            }
+
+            return back()->with('success', 'Timbangan aktual berhasil disimpan.');
+        }
+
+        // TAHAP 3: Kreditkan Poin ke Warga (Approved)
+        if ($action === 'approve') {
+            if ($deposit->status !== 'approved' && $deposit->status !== 'didistribusikan') {
+                // 1. Tambah poin
+                $warga = $deposit->user;
+                $warga->point_balance += $deposit->total_points;
+                $warga->save();
+
+                // 2. Update statistik sistem
+                $weightDetails = is_array($deposit->weight_details) ? $deposit->weight_details : json_decode($deposit->weight_details, true);
+                $totalWeight = array_sum($weightDetails ?: []);
+
+                $stats = SystemStat::first();
+                if ($stats) {
+                    $stats->total_landfill_saved += $totalWeight;
+                    $stats->total_co2_saved += $totalWeight * 2.5;
+                    $stats->save();
+                }
+
+                // 3. Ubah status
+                $deposit->update(['status' => 'approved']);
+            }
+            return back()->with('success', 'Poin berhasil dikreditkan ke dompet warga.');
+        }
+
+        // TAHAP 4: Distribusi ke Industri
+        if ($action === 'distribusi') {
+            $deposit->update(['status' => 'didistribusikan']);
+            return back()->with('success', 'Status diperbarui: Didistribusikan ke Industri.');
+        }
+
+        // TINDAKAN: Tolak Setoran
+        if ($action === 'reject') {
+            $deposit->update([
+                'collector_id' => $operator->id,
+                'status' => 'rejected',
+                'notes' => $request->input('notes', 'Sampah tidak memenuhi syarat atau kotor.'),
+            ]);
+            return back()->with('success', 'Setoran telah ditolak.');
+        }
+
+        return back();
     }
 
     /**
@@ -173,7 +285,21 @@ class BankSampahController extends Controller
         $settlements = Settlement::with('partner')->orderByDesc('created_at')->get();
         $stats = SystemStat::first();
 
-        return view('bank_sampah.settlement', compact('withdrawals', 'settlements', 'stats'));
+        $pendingPartners = UmkmPartner::with('user')->where('status', 'pending')->orderByDesc('created_at')->get();
+
+        return view('bank_sampah.settlement', compact('withdrawals', 'settlements', 'stats', 'pendingPartners'));
+    }
+
+    public function approvePartner($id)
+    {
+        UmkmPartner::findOrFail($id)->update(['status' => 'approved']);
+        return back()->with('success', 'Mitra UMKM berhasil disetujui!');
+    }
+
+    public function rejectPartner($id)
+    {
+        UmkmPartner::findOrFail($id)->update(['status' => 'rejected']);
+        return back()->with('success', 'Pengajuan Mitra UMKM ditolak.');
     }
 
     /**

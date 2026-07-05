@@ -5,10 +5,10 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <style>
     /* Custom numeric input hidden styling for numeric steppers */
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { 
-        -webkit-appearance: none; 
-        margin: 0; 
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
     }
     input[type=number] {
         -moz-appearance: textfield;
@@ -54,10 +54,10 @@
             <h2 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-3">
                 Formulir Penyetoran
             </h2>
-            
+
             <form action="{{ route('warga.setor.store') }}" method="POST" id="setorForm" class="space-y-6" enctype="multipart/form-data">
                 @csrf
-                
+
                 {{-- Hidden input for webcam photo capture --}}
                 <input type="hidden" name="captured_photo" id="capturedPhotoInput" value="">
 
@@ -67,7 +67,7 @@
                         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">
                             Estimasi Berat Sampah Anda
                         </h3>
-                        
+
                         {{-- Tabs Navigation --}}
                         <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1 self-start sm:self-auto select-none">
                             <button type="button" onclick="switchTab('daur-ulang')" data-category="daur-ulang" class="tab-btn px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border-b-2 border-emerald-500 text-emerald-600 bg-white shadow-sm focus:outline-none">
@@ -81,13 +81,15 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     {{-- TAB CONTENT LISTS --}}
-                    
+
                     {{-- 1. List Kategori Daur Ulang --}}
                     <div id="list-daur-ulang" class="category-list divide-y divide-slate-100 border border-slate-100 rounded-2xl bg-white p-2">
+                        @php $hasDaurUlang = false; @endphp
                         @foreach($wasteTypes as $type)
                             @if(\Illuminate\Support\Str::contains(strtolower($type->name), $daurUlangNames))
+                                @php $hasDaurUlang = true; @endphp
                                 <div id="type-card-{{ $type->id }}" class="waste-type-card flex items-center justify-between py-3 px-3 hover:bg-slate-50/50 rounded-xl transition-all">
                                     <div class="flex items-center gap-3">
                                         <div class="w-9 h-9 rounded-xl bg-slate-50 text-lg flex items-center justify-center shrink-0 border border-slate-100">
@@ -98,7 +100,7 @@
                                             <div class="text-[9px] text-slate-400 font-semibold mt-0.5">{{ number_format($type->points_per_kg, 0, ',', '.') }} Poin/kg</div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="flex items-center gap-3">
                                         <span class="text-[10px] text-slate-400 font-bold min-w-[50px] text-right pointer-display">0 Poin</span>
                                         <div class="flex items-center bg-slate-100 border border-slate-200 rounded-full p-0.5 shadow-inner">
@@ -111,6 +113,11 @@
                                 </div>
                             @endif
                         @endforeach
+
+                        {{-- Pesan jika data masih kosong --}}
+                        @if(!$hasDaurUlang)
+                            <div class="p-4 text-center text-slate-400 text-xs">Belum ada item kategori daur ulang.</div>
+                        @endif
                     </div>
 
                     {{-- 2. List Kategori Organik --}}
@@ -129,7 +136,7 @@
                                             <div class="text-[9px] text-slate-400 font-semibold mt-0.5">{{ number_format($type->points_per_kg, 0, ',', '.') }} Poin/kg</div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="flex items-center gap-3">
                                         <span class="text-[10px] text-slate-400 font-bold min-w-[50px] text-right pointer-display">0 Poin</span>
                                         <div class="flex items-center bg-slate-100 border border-slate-200 rounded-full p-0.5 shadow-inner">
@@ -168,7 +175,7 @@
                                             <div class="text-[9px] text-slate-400 font-semibold mt-0.5">{{ number_format($type->points_per_kg, 0, ',', '.') }} Poin/kg</div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="flex items-center gap-3">
                                         <span class="text-[10px] text-slate-400 font-bold min-w-[50px] text-right pointer-display">0 Poin</span>
                                         <div class="flex items-center bg-slate-100 border border-slate-200 rounded-full p-0.5 shadow-inner">
@@ -192,7 +199,7 @@
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">
                         Foto Bukti Penyerahan Sampah di Lokasi
                     </h3>
-                    
+
                     <div class="flex flex-col sm:flex-row items-center gap-3">
                         <button type="button" onclick="openCameraModal('proof')" class="w-full sm:w-auto px-4 py-3 bg-slate-55 hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm border border-slate-200">
                             <i class="bi bi-camera"></i> Ambil Foto Langsung
@@ -215,7 +222,7 @@
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">
                         Metode & Tanggal Pengumpulan
                     </h3>
-                    
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Metode Pengumpulan</label>
@@ -240,7 +247,7 @@
 
                     <div id="mapGroup" class="space-y-3">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase">Pin Lokasi di Peta</label>
-                        
+
                         {{-- Search Input OSM Nominatim --}}
                         <div class="flex gap-2">
                             <input type="text" id="mapSearchInput" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500 bg-slate-50 focus:bg-white transition-all" placeholder="Tulis nama jalan/RT RW kelurahan untuk memindahkan pin...">
@@ -280,7 +287,7 @@
                     <span>ESTIMASI TABUNGAN</span>
                     <span class="text-[9px] text-emerald-600 font-extrabold tracking-widest">TIECO</span>
                 </div>
-                
+
                 <div class="space-y-2.5 text-xs text-slate-600">
                     <div class="flex justify-between">
                         <span>Konversi Rupiah</span>
@@ -302,7 +309,7 @@
             {{-- ASISTEN AI PEMILAH SAMPAH (DARK THEME SMART CARD DENGAN DETIL MATERI) --}}
             <div class="bg-slate-900 text-white border border-slate-850 rounded-3xl p-6 shadow-xl space-y-4 relative overflow-hidden">
                 <div class="absolute -right-10 -top-10 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
-                
+
                 <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Smart AI: Cek Jenis Sampahmu
                 </h3>
@@ -328,7 +335,7 @@
                         </div>
                         <div id="aiStatusText" class="text-[10px] font-bold text-emerald-400">AI Detektor: Menganalisis...</div>
                     </div>
-                    
+
                     <div id="aiRecommendText" class="text-[10px] text-slate-300 leading-relaxed space-y-2">
                         Sedang mendeteksi materi sampah Anda...
                     </div>
@@ -337,10 +344,10 @@
                 {{-- AI Photo Preview container with scanning laser overlay --}}
                 <div id="aiPreviewContainer" class="hidden relative w-full aspect-video rounded-2xl overflow-hidden border border-slate-700 shadow-md">
                     <img id="aiPreview" class="w-full h-full object-cover" src="">
-                    
+
                     {{-- Scanning laser line --}}
                     <div id="aiScanLaser" class="hidden absolute left-0 right-0 h-1 bg-emerald-450 shadow-[0_0_10px_#34d399] z-20" style="top: 0;"></div>
-                    
+
                     <button type="button" onclick="removeAiPhoto()" class="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] shadow-md transition-all z-30">✕</button>
                 </div>
             </div>
@@ -375,7 +382,7 @@
                 <video id="webcamVideo" class="w-full h-full object-cover" autoplay playsinline></video>
                 <div id="cameraFallbackText" class="hidden text-xs text-slate-400 px-4 text-center">Mengaktifkan kamera...</div>
             </div>
-            
+
             <div class="flex justify-center gap-4 w-full pt-2">
                 <button type="button" onclick="closeCameraModal()" class="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition-all">Batal</button>
                 <button type="button" onclick="capturePhoto()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-emerald-600/10 flex items-center gap-1.5">
@@ -438,14 +445,14 @@ function switchTab(categoryName) {
         btn.classList.remove('border-emerald-500', 'text-emerald-600', 'bg-white', 'shadow-sm');
         btn.classList.add('border-transparent', 'text-slate-500', 'hover:text-slate-700');
     });
-    
+
     // Add active class to selected tab button
     const activeBtn = document.querySelector(`.tab-btn[data-category="${categoryName}"]`);
     if (activeBtn) {
         activeBtn.classList.remove('border-transparent', 'text-slate-500', 'hover:text-slate-700');
         activeBtn.classList.add('border-emerald-500', 'text-emerald-600', 'bg-white', 'shadow-sm');
     }
-    
+
     // Hide all category lists, show the matching list
     document.querySelectorAll('.category-list').forEach(list => {
         list.classList.add('hidden');
@@ -485,7 +492,7 @@ function openCameraModal(target = 'proof') {
     cameraModal.classList.remove('hidden');
     fallbackText.classList.remove('hidden');
     video.classList.add('hidden');
-    
+
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
         .then(stream => {
             localStream = stream;
@@ -510,29 +517,29 @@ function closeCameraModal() {
 
 function capturePhoto() {
     if (!localStream) return;
-    
+
     const ctx = canvas.getContext('2d');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
+
     const dataUrl = canvas.toDataURL('image/jpeg');
-    
+
     if (cameraTarget === 'proof') {
         const previewImg = document.getElementById('proofPreview');
         previewImg.src = dataUrl;
         document.getElementById('proofPreviewContainer').classList.remove('hidden');
-        
+
         document.getElementById('capturedPhotoInput').value = dataUrl;
         document.getElementById('photoInput').value = '';
     } else {
         const previewImg = document.getElementById('aiPreview');
         previewImg.src = dataUrl;
         document.getElementById('aiPreviewContainer').classList.remove('hidden');
-        
+
         triggerAIScanner(dataUrl, 'captured_photo.jpg');
     }
-    
+
     closeCameraModal();
 }
 
@@ -540,7 +547,7 @@ function capturePhoto() {
 function previewProofPhoto(input) {
     const container = document.getElementById('proofPreviewContainer');
     const img = document.getElementById('proofPreview');
-    
+
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -562,13 +569,13 @@ function removeProofPhoto() {
 function previewAiPhoto(input) {
     const container = document.getElementById('aiPreviewContainer');
     const img = document.getElementById('aiPreview');
-    
+
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             img.src = e.target.result;
             container.classList.remove('hidden');
-            
+
             triggerAIScanner(e.target.result, input.files[0].name);
         }
         reader.readAsDataURL(input.files[0]);
@@ -579,7 +586,7 @@ function removeAiPhoto() {
     document.getElementById('aiFileInput').value = '';
     document.getElementById('aiPreviewContainer').classList.add('hidden');
     document.getElementById('aiDetectorPanel').classList.add('hidden');
-    
+
     document.querySelectorAll('.waste-type-card').forEach(card => {
         card.classList.remove('ai-highlighted');
     });
@@ -606,7 +613,7 @@ const wasteTypeKeywords = {
     'elektronik': 'elektronik', 'hp': 'elektronik', 'kabel': 'elektronik', 'lampu': 'elektronik', 'tv': 'elektronik', 'komputer': 'elektronik', 'ewaste': 'elektronik', 'kipas': 'elektronik',
     'minyak': 'jelantah', 'jelantah': 'jelantah', 'oil': 'jelantah',
     'sisa': 'organik', 'dapur': 'organik', 'makanan': 'organik', 'kompos': 'organik', 'sayur': 'organik', 'buah': 'organik', 'daun': 'organik',
-    'residu': 'residu', 'popok': 'residu', 'pembalut': 'residu', 'tissue': 'residu', 'tisu': 'residu', 'masker': 'residu'
+    'residu': 'residu', 'popok': 'residu', 'pembalut': 'residu', 'tissue': 'residu', 'tisu': 'residu', 'masker': 'residu', 'French loaf': 'residu'
 };
 
 // Detail penjelasan materi dan tips untuk ditunjukkan kepada user di panel AI
@@ -666,22 +673,22 @@ function triggerAIScanner(imageSrc, filename) {
     const panel = document.getElementById('aiDetectorPanel');
     const statusText = document.getElementById('aiStatusText');
     const recommendText = document.getElementById('aiRecommendText');
-    
+
     document.querySelectorAll('.waste-type-card').forEach(card => {
         card.classList.remove('ai-highlighted');
     });
-    
+
     laser.classList.remove('hidden');
     panel.classList.remove('hidden');
     statusText.innerHTML = '<span class="inline-block animate-pulse text-emerald-400">🤖 AI Detektor: Sedang memindai gambar...</span>';
     recommendText.innerHTML = '<span class="text-slate-400 text-[10px]">Menganalisis materi objek dan mendeteksi kategori sampah...</span>';
-    
+
     panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     setTimeout(() => {
         let detectedKeyword = null;
         const nameLower = filename.toLowerCase();
-        
+
         // 1. Cek keyword nama file
         for (const [key, category] of Object.entries(wasteTypeKeywords)) {
             if (nameLower.includes(key)) {
@@ -689,7 +696,7 @@ function triggerAIScanner(imageSrc, filename) {
                 break;
             }
         }
-        
+
         // 2. Jika tidak ada keyword nama file & MobileNet siap, gunakan klasifikasi piksel
         if (!detectedKeyword && net) {
             const tempImg = new Image();
@@ -697,10 +704,10 @@ function triggerAIScanner(imageSrc, filename) {
             tempImg.onload = function() {
                 net.classify(tempImg).then(predictions => {
                     console.log('MobileNet Predictions:', predictions);
-                    
+
                     for (let pred of predictions) {
                         const label = pred.className.toLowerCase();
-                        
+
                         if (label.includes('bottle') || label.includes('plastic') || label.includes('cup') || label.includes('water bottle') || label.includes('canister') || label.includes('container') || label.includes('shampoo') || label.includes('toilet tissue')) {
                             detectedKeyword = 'plastik';
                             break;
@@ -725,12 +732,12 @@ function triggerAIScanner(imageSrc, filename) {
                             detectedKeyword = 'jelantah';
                             break;
                         }
-                        if (label.includes('food') || label.includes('fruit') || label.includes('vegetable') || label.includes('banana') || label.includes('apple') || label.includes('leaf') || label.includes('flower') || label.includes('plant') || label.includes('compost')) {
+                        if (label.includes('food') || label.includes('hotdog') || label.includes('fruit') || label.includes('vegetable') || label.includes('banana') || label.includes('apple') || label.includes('leaf') || label.includes('flower') || label.includes('plant') || label.includes('compost')) {
                             detectedKeyword = 'organik';
                             break;
                         }
                     }
-                    
+
                     finalizeScan(detectedKeyword);
                 }).catch(err => {
                     console.error("MobileNet classifier error:", err);
@@ -749,18 +756,18 @@ function finalizeScan(detectedKeyword) {
     const recommendText = document.getElementById('aiRecommendText');
 
     laser.classList.add('hidden');
-    
+
     // Fallback jika tidak terdeteksi
     if (!detectedKeyword) {
         detectedKeyword = 'plastik'; // Default ke Plastik
     }
-    
+
     const confidence = Math.floor(Math.random() * 8) + 90; // 90% - 97% confidence
     const details = wasteTypeDetails[detectedKeyword];
-    
+
     // Cari ID database menggunakan helper kustom
     const dbTypeId = getWasteTypeIdByName(detectedKeyword);
-    
+
     // Tampilkan status & detail materi sampah di panel
     statusText.innerHTML = `🤖 AI Detektor: Terdeteksi <strong>${details.title}</strong> (Konfidensi ${confidence}%)`;
     recommendText.innerHTML = `
@@ -773,7 +780,7 @@ function finalizeScan(detectedKeyword) {
             💡 AI menyarankan Anda memasukkan berat estimasi pada kolom bertanda hijau di formulir sebelah kiri.
         </div>
     `;
-    
+
     if (dbTypeId) {
         const card = document.getElementById(`type-card-${dbTypeId}`);
         if (card) {
@@ -804,17 +811,17 @@ function calculateLiveEstimate() {
         const pointsPerKg = parseInt(input.dataset.poin) || 0;
         const poin = Math.floor(weight * pointsPerKg);
         totalPoin += poin;
-        
+
         const displayLabel = input.parentElement.parentElement.querySelector('.pointer-display');
         if (displayLabel) {
             displayLabel.textContent = poin.toLocaleString('id-ID') + ' Poin';
         }
     });
-    
+
     livePoinEl.textContent = totalPoin.toLocaleString('id-ID');
     liveRpEl.textContent = 'Rp ' + (totalPoin * 10).toLocaleString('id-ID');
     if (liveTotalDisplay) liveTotalDisplay.textContent = totalPoin.toLocaleString('id-ID');
-    
+
     if (mobilePoinEl) mobilePoinEl.textContent = totalPoin.toLocaleString('id-ID');
     if (mobileRpEl) mobileRpEl.textContent = 'Rp ' + (totalPoin * 10).toLocaleString('id-ID');
 }
@@ -864,9 +871,9 @@ document.addEventListener("DOMContentLoaded", function() {
     function reverseGeocode(lat, lng) {
         const addrTextarea = document.querySelector('textarea[name="address"]');
         if (!addrTextarea) return;
-        
+
         addrTextarea.placeholder = "Mengambil detail lokasi...";
-        
+
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
             .then(response => response.json())
             .then(data => {
@@ -911,11 +918,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (data && data.length > 0) {
                     const lat = parseFloat(data[0].lat);
                     const lon = parseFloat(data[0].lon);
-                    
+
                     pickerMap.setView([lat, lon], 16);
                     marker.setLatLng([lat, lon]);
                     updateCoords(lat, lon);
-                    
+
                     const addrTextarea = document.querySelector('textarea[name="address"]');
                     if (addrTextarea) {
                         addrTextarea.value = data[0].display_name;

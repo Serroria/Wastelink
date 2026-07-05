@@ -37,6 +37,55 @@ class UmkmController extends Controller
     }
 
     /**
+     * Mendaftar sebagai UMKM Mitra Baru.
+     */
+    public function register(Request $request)
+    {
+        $request->validate([
+            'store_name' => 'required|string|max:255',
+            'category' => 'required|string',
+            'address' => 'required|string',
+            'description' => 'required|string'
+        ]);
+
+        UmkmPartner::create([
+            'user_id' => Auth::id(),
+            'store_name' => $request->store_name,
+            'category' => $request->category,
+            'address' => $request->address,
+            'description' => $request->description,
+            'status' => 'pending', // Menunggu persetujuan
+            'latitude' => -6.3024, // Bisa disesuaikan dengan input map nantinya
+            'longitude' => 107.3065
+        ]);
+
+        return back()->with('success', 'Pengajuan kemitraan berhasil dikirim. Menunggu persetujuan Operator Bank Sampah.');
+    }
+
+    /**
+     * UMKM Menambahkan Produk/Voucher Baru
+     */
+    public function storeProduct(Request $request)
+    {
+        $partner = UmkmPartner::where('user_id', Auth::id())->first();
+
+        if (!$partner || $partner->status !== 'approved') {
+            return back()->with('error', 'Toko Anda belum disetujui.');
+        }
+
+        UmkmProduct::create([
+            'umkm_partner_id' => $partner->id,
+            'name' => $request->name,
+            'description' => $request->description,
+            'points_cost' => $request->points_cost,
+            'price_value' => $request->points_cost * 10, // Asumsi 1 poin = Rp 10
+            'stock' => $request->stock
+        ]);
+
+        return back()->with('success', 'Produk/Voucher berhasil ditambahkan ke katalog.');
+    }
+
+    /**
      * Validasi kode voucher warga.
      */
     public function validateVoucher(Request $request)

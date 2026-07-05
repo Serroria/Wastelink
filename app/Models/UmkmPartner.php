@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class UmkmPartner extends Model
 {
-    protected $fillable = ['user_id', 'store_name', 'category', 'address', 'description'];
+    protected $fillable = ['user_id', 'store_name', 'category', 'address', 'description', 'latitude',
+        'longitude',
+        'status'];
 
     public function user()
     {

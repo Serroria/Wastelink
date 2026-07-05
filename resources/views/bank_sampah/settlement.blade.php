@@ -92,5 +92,69 @@
         </div>
     </div>
 </div>
+
+</div> {{-- Ini adalah div penutup dari <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> --}}
+
+    {{-- PANEL VERIFIKASI MITRA UMKM BARU --}}
+    <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">🤝 Verifikasi Kemitraan UMKM Baru</h3>
+
+        @if(!isset($pendingPartners) || $pendingPartners->isEmpty())
+            <div class="text-center py-12 text-slate-400 text-sm">
+                Belum ada pengajuan kemitraan UMKM baru saat ini.
+            </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
+                            <th class="pb-3 pr-4">Nama Toko & Pemilik</th>
+                            <th class="pb-3 px-4">Kategori</th>
+                            <th class="pb-3 px-4">Alamat & Deskripsi</th>
+                            <th class="pb-3 pl-4 text-right">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-600">
+                        @foreach($pendingPartners as $p)
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="py-3 pr-4">
+                                    <div class="font-bold text-slate-800">{{ $p->store_name }}</div>
+                                    <div class="text-[10px] text-slate-400">Pemilik: {{ $p->user->name ?? 'Tidak diketahui' }}</div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md font-bold uppercase tracking-wider text-[9px] border border-slate-200">
+                                        {{ $p->category }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 max-w-xs">
+                                    <div class="font-semibold text-slate-700 truncate" title="{{ $p->address }}"><i class="bi bi-geo-alt"></i> {{ $p->address }}</div>
+                                    <div class="text-[10px] text-slate-400 truncate mt-0.5" title="{{ $p->description }}">{{ $p->description }}</div>
+                                </td>
+                                <td class="py-3 pl-4">
+                                    <div class="flex justify-end gap-2">
+                                        <form action="{{ route('bank-sampah.umkm.approve', $p->id) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-[10px] transition-all shadow-sm">
+                                                ✅ Setujui
+                                            </button>
+                                        </form>
+                                        <form action="{{ route('bank-sampah.umkm.reject', $p->id) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-[10px] transition-all shadow-sm">
+                                                ✕ Tolak
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+
+</div> {{-- Penutup tag <div class="w-full space-y-6"> yang paling atas --}}
+
 @endsection
 
