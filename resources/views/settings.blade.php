@@ -10,7 +10,24 @@
             <h1 class="text-xl font-bold text-slate-800">Pengaturan</h1>
             <p class="text-xs text-slate-400">Kelola informasi profil dan keamanan akun Anda.</p>
         </div>
-        <a href="{{ route('warga.dashboard') }}" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 shadow-sm">
+        @php
+            $backRoute = match ($user->role) {
+                'warga' => route('warga.dashboard'),
+                'bank_sampah' => route('bank-sampah.dashboard'),
+                'umkm' => route('umkm.dashboard'),
+                'pembeli' => route('pembeli.dashboard'),
+                default => url()->previous(),
+            };
+
+            $roleBadge = match ($user->role) {
+                'warga' => ['label' => 'Warga', 'icon' => 'bi-person-fill', 'bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'border' => 'border-emerald-100'],
+                'bank_sampah' => ['label' => 'Bank Sampah', 'icon' => 'bi-bank2', 'bg' => 'bg-sky-50', 'text' => 'text-sky-700', 'border' => 'border-sky-100'],
+                'umkm' => ['label' => 'Mitra UMKM', 'icon' => 'bi-shop', 'bg' => 'bg-violet-50', 'text' => 'text-violet-700', 'border' => 'border-violet-100'],
+                'pembeli' => ['label' => 'Pembeli Industri', 'icon' => 'bi-cart3', 'bg' => 'bg-orange-50', 'text' => 'text-orange-700', 'border' => 'border-orange-100'],
+                default => ['label' => ucfirst(str_replace('_', ' ', $user->role)), 'icon' => 'bi-person-fill', 'bg' => 'bg-slate-50', 'text' => 'text-slate-700', 'border' => 'border-slate-100'],
+            };
+        @endphp
+        <a href="{{ $backRoute }}" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 shadow-sm">
             <i class="bi bi-arrow-left text-sm"></i> Kembali
         </a>
     </div>
@@ -35,12 +52,14 @@
             <h2 class="text-base font-bold text-slate-800">{{ $user->name }}</h2>
             <p class="text-xs text-slate-400 font-medium">@ {{ $user->username }} &bull; {{ $user->email }}</p>
             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
-                <span class="text-[9px] px-2 py-0.5 bg-emerald-50 text-emerald-700 font-bold rounded-full border border-emerald-100">
-                    <i class="bi bi-person-fill"></i> Warga
+                <span class="text-[9px] px-2 py-0.5 {{ $roleBadge['bg'] }} {{ $roleBadge['text'] }} font-bold rounded-full border {{ $roleBadge['border'] }}">
+                    <i class="bi {{ $roleBadge['icon'] }}"></i> {{ $roleBadge['label'] }}
                 </span>
-                <span class="text-[9px] px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded-full border border-amber-100">
-                    <i class="bi bi-coin"></i> {{ number_format($user->point_balance, 0, ',', '.') }} Poin
-                </span>
+                @if($user->role === 'warga')
+                    <span class="text-[9px] px-2 py-0.5 bg-amber-50 text-amber-700 font-bold rounded-full border border-amber-100">
+                        <i class="bi bi-coin"></i> {{ number_format($user->point_balance, 0, ',', '.') }} Poin
+                    </span>
+                @endif
             </div>
         </div>
     </div>
@@ -73,7 +92,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('warga.settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <form action="{{ route('settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
                 
                 {{-- TAB 1: EDIT PROFILE --}}

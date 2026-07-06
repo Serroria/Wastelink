@@ -72,19 +72,25 @@
             $currentRole = auth()->user()->role; 
             $initials = auth()->user()->initials();
             $profilePhotoUrl = auth()->user()->profilePhotoUrl();
+            $logoRoute = match ($currentRole) {
+                'warga' => route('warga.dashboard'),
+                'bank_sampah' => route('bank-sampah.dashboard'),
+                'umkm' => route('umkm.dashboard'),
+                'pembeli' => route('pembeli.dashboard'),
+                default => '#',
+            };
         @endphp
         
         {{-- SIDEBAR --}}
         <aside id="sidebar" class="w-full md:w-64 bg-white border-r border-slate-100 flex flex-col justify-between shrink-0 h-screen sticky top-0">
             <div class="p-6 overflow-y-auto">
-                <div class="flex items-center gap-2 mb-8 whitespace-nowrap">
+                <a href="{{ $logoRoute }}" class="flex items-center gap-2 mb-8 whitespace-nowrap hover:opacity-80 transition-opacity">
                     <span class="text-2xl shrink-0 select-none">♻️</span>
                     <span class="text-xl font-extrabold tracking-tight text-emerald-600">TIECO</span>
-                </div>
+                </a>
 
                 <nav class="space-y-1 w-full">
                     @if($currentRole === 'warga')
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3 whitespace-nowrap">Menu Warga</div>
                         <a href="{{ route('warga.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('warga.dashboard') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
                             <i class="bi bi-speedometer2 text-lg"></i>
                             <span>Dasbor</span>
@@ -101,12 +107,11 @@
                             <i class="bi bi-shop text-lg"></i>
                             <span>Katalog & Peta UMKM</span>
                         </a>
-                        <a href="{{ route('warga.settings') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('warga.settings') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
+                        <a href="{{ route('settings', ['tab' => 'security']) }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('settings') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
                             <i class="bi bi-gear text-lg"></i>
                             <span>Pengaturan</span>
                         </a>
                     @elseif($currentRole === 'bank_sampah')
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3 whitespace-nowrap">Operator Bank Sampah</div>
                         <a href="{{ route('bank-sampah.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('bank-sampah.dashboard') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
                             <i class="bi bi-speedometer2 text-lg"></i>
                             <span>Dasbor</span>
@@ -123,19 +128,34 @@
                             <i class="bi bi-wallet2 text-lg"></i>
                             <span>Settlement & Kas</span>
                         </a>
+                        <a href="{{ route('settings', ['tab' => 'security']) }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('settings') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
+                            <i class="bi bi-gear text-lg"></i>
+                            <span>Pengaturan</span>
+                        </a>
                     @elseif($currentRole === 'umkm')
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3 whitespace-nowrap">Mitra UMKM</div>
                         <a href="{{ route('umkm.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('umkm.dashboard') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
                             <i class="bi bi-qr-code-scan text-lg"></i>
                             <span>Dasbor & Validasi</span>
                         </a>
+                        <a href="{{ route('settings', ['tab' => 'security']) }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('settings') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
+                            <i class="bi bi-gear text-lg"></i>
+                            <span>Pengaturan</span>
+                        </a>
                     @elseif($currentRole === 'pembeli')
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-3 whitespace-nowrap">Pembeli Industri</div>
                         <a href="{{ route('pembeli.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('pembeli.dashboard') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
                             <i class="bi bi-cart3 text-lg"></i>
                             <span>Lapak B2B</span>
                         </a>
+                        <a href="{{ route('settings', ['tab' => 'security']) }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('settings') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
+                            <i class="bi bi-gear text-lg"></i>
+                            <span>Pengaturan</span>
+                        </a>
                     @endif
+
+                    <a href="{{ route('dampak.realtime') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('dampak.realtime') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
+                        <i class="bi bi-bar-chart-line text-lg {{ request()->routeIs('dampak.realtime') ? 'text-emerald-600' : 'text-slate-400' }}"></i>
+                        <span>Laporan Dampak</span>
+                    </a>
                 </nav>
             </div>
         </aside>
@@ -166,7 +186,8 @@
                     <button id="profileDropdownBtn" class="flex items-center gap-3 p-1 pr-3 rounded-full border border-slate-100 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-100">
                         <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
                             @if($profilePhotoUrl)
-                                <img src="{{ $profilePhotoUrl }}" alt="Foto profil" class="w-full h-full object-cover">
+                                <span class="hidden">{{ $initials ?? 'U' }}</span>
+                                <img src="{{ $profilePhotoUrl }}" alt="Foto profil" class="w-full h-full object-cover" onerror="this.style.display='none'; this.previousElementSibling.classList.remove('hidden')">
                             @else
                                 {{ $initials ?? 'U' }}
                             @endif
@@ -180,10 +201,10 @@
 
                     {{-- Dropdown Menu --}}
                     <div id="profileDropdownMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 opacity-0 invisible transform scale-95 transition-all origin-top-right z-50">
-                        <a href="{{ $currentRole === 'warga' ? route('warga.settings') : '#' }}" class="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-colors font-medium">
+                        <a href="{{ route('settings', ['tab' => 'profile']) }}" class="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-colors font-medium">
                             <i class="bi bi-person mr-2 text-slate-400"></i> Edit Profile
                         </a>
-                        <a href="{{ $currentRole === 'warga' ? route('warga.settings') : '#' }}" class="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-colors font-medium">
+                        <a href="{{ route('settings', ['tab' => 'security']) }}" class="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-colors font-medium">
                             <i class="bi bi-gear mr-2 text-slate-400"></i> Setting
                         </a>
                         <div class="border-t border-slate-100 my-1"></div>

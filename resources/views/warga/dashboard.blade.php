@@ -78,6 +78,21 @@
         </div>
     </div>
 
+    {{-- Dampak Sosial Banner --}}
+    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-start gap-4">
+            <span class="text-3xl sm:text-4xl shrink-0">🌍</span>
+            <div class="space-y-1">
+                <h4 class="text-sm font-bold text-slate-800">Laporan Dampak Sosial & Lingkungan</h4>
+                <p class="text-xs text-slate-500 leading-relaxed max-w-xl">
+                    Lihat kontribusi nyata Anda dan warga lainnya dalam menyelamatkan lingkungan, mengurangi emisi CO2, dan memberikan bantuan pangan kepada keluarga kurang mampu secara real-time.
+                </p>
+            </div>
+        </div>
+        <a href="{{ route('dampak.realtime') }}" class="shrink-0 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm shadow-emerald-600/10 hover:shadow-lg hover:shadow-emerald-600/20 hover:-translate-y-0.5 transform">
+            Lihat Laporan Dampak
+        </a>
+    </div>
 
     {{-- Vouchers & Transaction Feeds --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

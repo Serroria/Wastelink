@@ -154,14 +154,37 @@
 
         {{-- Right Side: Actions --}}
         <div class="flex items-center gap-2">
-            <a href="{{ route('login') }}"
-                class="px-4 py-2 border-2 border-emerald-800 text-emerald-800 hover:text-white hover:bg-emerald-800 font-bold rounded-full text-xs transition-all hover:scale-105 active:scale-95 transform shadow-sm">
-                Masuk
-            </a>
-            <a href="{{ route('register') }}"
-                class="px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-full text-xs transition-all shadow-md shadow-emerald-800/30 hover:shadow-emerald-900/40 hover:scale-105 active:scale-95 transform">
-                Daftar
-            </a>
+            @auth
+                @php
+                    $dashboardRoute = match (auth()->user()->role) {
+                        'warga' => route('warga.dashboard'),
+                        'bank_sampah' => route('bank-sampah.dashboard'),
+                        'umkm' => route('umkm.dashboard'),
+                        'pembeli' => route('pembeli.dashboard'),
+                        default => '#',
+                    };
+                @endphp
+                <a href="{{ $dashboardRoute }}"
+                    class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-full text-xs transition-all shadow-md hover:scale-105 active:scale-95 transform">
+                    Ke Dasbor
+                </a>
+                <form action="{{ route('demo.logout') }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit"
+                        class="px-4 py-2 border-2 border-red-600 text-red-600 hover:text-white hover:bg-red-600 font-bold rounded-full text-xs transition-all hover:scale-105 active:scale-95 transform shadow-sm">
+                        Keluar
+                    </button>
+                </form>
+            @else
+                <a href="{{ route('login') }}"
+                    class="px-4 py-2 border-2 border-emerald-800 text-emerald-800 hover:text-white hover:bg-emerald-800 font-bold rounded-full text-xs transition-all hover:scale-105 active:scale-95 transform shadow-sm">
+                    Masuk
+                </a>
+                <a href="{{ route('register') }}"
+                    class="px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-full text-xs transition-all shadow-md shadow-emerald-800/30 hover:shadow-emerald-900/40 hover:scale-105 active:scale-95 transform">
+                    Daftar
+                </a>
+            @endauth
         </div>
     </header>
 
@@ -587,7 +610,7 @@
                     Seluruh keuntungan penjualan B2B sampah dialokasikan untuk subsidi pangan warga prasejahtera
                     dan beasiswa anak-anak di kelurahan.
                 </p>
-                <a href="{{ route('register') }}"
+                <a href="{{ auth()->check() ? route('dampak.realtime') : route('login') }}"
                     class="inline-block px-8 py-3.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-full text-xs transition-all shadow-md shadow-emerald-700/20 hover:scale-105 transform">
                     Lihat Laporan Dampak
                 </a>
@@ -663,7 +686,7 @@
                     <span class="text-3xl mb-4">👥</span>
                     <div>
                         <div class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight"><span
-                                class="stat-count" data-target="2400">0</span>+</div>
+                                class="stat-count" data-target="{{ $totalWarga ?: 0 }}">0</span>+</div>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Kepala Keluarga</p>
                     </div>
                 </div>
@@ -673,8 +696,10 @@
                     class="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
                     <span class="text-3xl mb-4">🚛</span>
                     <div>
-                        <div class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight"><span
-                                class="stat-count" data-target="12">0</span> Ton</div>
+                        <div class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+                            <span class="stat-count" data-target="{{ $totalWeight >= 1000 ? round($totalWeight / 1000) : round($totalWeight) }}">0</span> 
+                            {{ $totalWeight >= 1000 ? 'Ton' : 'kg' }}
+                        </div>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Sampah Terdaur Ulang
                         </p>
                     </div>
@@ -686,7 +711,7 @@
                     <span class="text-3xl mb-4">🏪</span>
                     <div>
                         <div class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight"><span
-                                class="stat-count" data-target="85">0</span>+</div>
+                                class="stat-count" data-target="{{ $totalUmkm ?: 0 }}">0</span>+</div>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Warung UMKM Rekanan
                         </p>
                     </div>
@@ -698,7 +723,7 @@
                     <span class="text-3xl mb-4">🎫</span>
                     <div>
                         <div class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight"><span
-                                class="stat-count" data-target="340">0</span>+</div>
+                                class="stat-count" data-target="{{ $totalVouchers ?: 0 }}">0</span>+</div>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Voucher Sembako
                             Disalurkan</p>
                     </div>

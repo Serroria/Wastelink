@@ -606,14 +606,22 @@ if (typeof mobilenet !== 'undefined') {
 
 // === LOGIKA DETEKSI KATA KUNCI AI SCANNER ===
 const wasteTypeKeywords = {
-    'plastik': 'plastik', 'botol': 'plastik', 'mineral': 'plastik', 'hdpe': 'plastik', 'pet': 'plastik', 'cup': 'plastik',
-    'kertas': 'kertas', 'kardus': 'kertas', 'karton': 'kertas', 'buku': 'kertas', 'majalah': 'kertas', 'hvs': 'kertas', 'paper': 'kertas',
-    'logam': 'logam', 'kaleng': 'logam', 'besi': 'logam', 'kawat': 'logam', 'aluminium': 'logam', 'biskuit': 'logam', 'metal': 'logam',
-    'kaca': 'kaca', 'cermin': 'kaca', 'toples': 'kaca', 'glass': 'kaca', 'beling': 'kaca',
-    'elektronik': 'elektronik', 'hp': 'elektronik', 'kabel': 'elektronik', 'lampu': 'elektronik', 'tv': 'elektronik', 'komputer': 'elektronik', 'ewaste': 'elektronik', 'kipas': 'elektronik',
-    'minyak': 'jelantah', 'jelantah': 'jelantah', 'oil': 'jelantah',
-    'sisa': 'organik', 'dapur': 'organik', 'makanan': 'organik', 'kompos': 'organik', 'sayur': 'organik', 'buah': 'organik', 'daun': 'organik',
-    'residu': 'residu', 'popok': 'residu', 'pembalut': 'residu', 'tissue': 'residu', 'tisu': 'residu', 'masker': 'residu', 'French loaf': 'residu'
+    // Plastik
+    'plastik': 'plastik', 'botol': 'plastik', 'mineral': 'plastik', 'hdpe': 'plastik', 'pet': 'plastik', 'cup': 'plastik', 'plastic': 'plastik', 'polyethylene': 'plastik', 'shampoo': 'plastik', 'pipa': 'plastik',
+    // Kertas
+    'kertas': 'kertas', 'kardus': 'kertas', 'karton': 'kertas', 'buku': 'kertas', 'majalah': 'kertas', 'hvs': 'kertas', 'paper': 'kertas', 'cardboard': 'kertas', 'box': 'kertas', 'envelope': 'kertas', 'koran': 'kertas', 'newspaper': 'kertas',
+    // Logam
+    'logam': 'logam', 'kaleng': 'logam', 'besi': 'logam', 'kawat': 'logam', 'aluminium': 'logam', 'biskuit': 'logam', 'metal': 'logam', 'can': 'logam', 'tin': 'logam', 'soda': 'logam', 'tembaga': 'logam', 'seng': 'logam', 'kuningan': 'logam',
+    // Kaca
+    'kaca': 'kaca', 'cermin': 'kaca', 'toples': 'kaca', 'glass': 'kaca', 'beling': 'kaca', 'jar': 'kaca', 'goblet': 'kaca',
+    // Elektronik
+    'elektronik': 'elektronik', 'hp': 'elektronik', 'kabel': 'elektronik', 'lampu': 'elektronik', 'tv': 'elektronik', 'komputer': 'elektronik', 'ewaste': 'elektronik', 'kipas': 'elektronik', 'phone': 'elektronik', 'keyboard': 'elektronik', 'mouse': 'elektronik', 'monitor': 'elektronik', 'charger': 'elektronik', 'baterai': 'elektronik', 'battery': 'elektronik',
+    // Jelantah
+    'minyak': 'jelantah', 'jelantah': 'jelantah', 'oil': 'jelantah', 'cooking oil': 'jelantah',
+    // Organik
+    'sisa': 'organik', 'dapur': 'organik', 'makanan': 'organik', 'kompos': 'organik', 'sayur': 'organik', 'buah': 'organik', 'daun': 'organik', 'food': 'organik', 'fruit': 'organik', 'vegetable': 'organik', 'leaf': 'organik', 'organic': 'organik', 'plant': 'organik', 'nasi': 'organik',
+    // Residu
+    'residu': 'residu', 'popok': 'residu', 'pembalut': 'residu', 'tissue': 'residu', 'tisu': 'residu', 'masker': 'residu', 'French loaf': 'residu', 'trash': 'residu', 'garbage': 'residu', 'waste': 'residu', 'dust': 'residu'
 };
 
 // Detail penjelasan materi dan tips untuk ditunjukkan kepada user di panel AI
@@ -680,10 +688,70 @@ function triggerAIScanner(imageSrc, filename) {
 
     laser.classList.remove('hidden');
     panel.classList.remove('hidden');
-    statusText.innerHTML = '<span class="inline-block animate-pulse text-emerald-400">🤖 AI Detektor: Sedang memindai gambar...</span>';
-    recommendText.innerHTML = '<span class="text-slate-400 text-[10px]">Menganalisis materi objek dan mendeteksi kategori sampah...</span>';
+    statusText.innerHTML = '<span class="inline-block animate-pulse text-emerald-400">🤖 AI Detektor: Menghubungi Server AI...</span>';
+    recommendText.innerHTML = '<span class="text-slate-400 text-[10px]">Mengirim gambar ke model klasifikasi tingkat lanjut...</span>';
 
     panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Kirim gambar ke controller Laravel yang menjangkau Flask server
+    let formData = new FormData();
+    formData.append('_token', '{{ csrf_token() }}');
+    
+    const fileInput = document.getElementById('aiFileInput');
+    if (fileInput.files && fileInput.files[0] && !imageSrc.startsWith('data:image')) {
+        formData.append('image', fileInput.files[0]);
+    } else {
+        formData.append('image_base64', imageSrc);
+    }
+
+    fetch('{{ route("warga.setor.analyze-ai") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Flask API server offline');
+        return response.json();
+    })
+    .then(data => {
+        console.log('Backend AI Response:', data);
+        
+        let predictionStr = '';
+        if (data.class) predictionStr = data.class;
+        else if (data.prediction) predictionStr = data.prediction;
+        else if (data.label) predictionStr = data.label;
+        else if (data.category) predictionStr = data.category;
+        else if (data.result) predictionStr = data.result;
+
+        let detectedKeyword = null;
+        if (predictionStr) {
+            const predLower = predictionStr.toLowerCase();
+            for (const [key, category] of Object.entries(wasteTypeKeywords)) {
+                if (predLower.includes(key)) {
+                    detectedKeyword = category;
+                    break;
+                }
+            }
+        }
+
+        if (detectedKeyword) {
+            finalizeScan(detectedKeyword);
+        } else {
+            console.log('Hasil Flask tidak mengandung kata kunci yang dikenali, beralih ke MobileNet Lokal...');
+            runClientSideMobileNet(imageSrc, filename);
+        }
+    })
+    .catch(err => {
+        console.warn('Gagal menghubungi Flask AI, menggunakan klasifikasi lokal:', err);
+        runClientSideMobileNet(imageSrc, filename);
+    });
+}
+
+function runClientSideMobileNet(imageSrc, filename) {
+    const statusText = document.getElementById('aiStatusText');
+    const recommendText = document.getElementById('aiRecommendText');
+    
+    statusText.innerHTML = '<span class="inline-block animate-pulse text-emerald-400">🤖 AI Detektor: Memproses Klasifikasi Lokal...</span>';
+    recommendText.innerHTML = '<span class="text-slate-400 text-[10px]">Menganalisis piksel gambar di browser Anda...</span>';
 
     setTimeout(() => {
         let detectedKeyword = null;
@@ -697,7 +765,7 @@ function triggerAIScanner(imageSrc, filename) {
             }
         }
 
-        // 2. Jika tidak ada keyword nama file & MobileNet siap, gunakan klasifikasi piksel
+        // 2. Jika tidak ada keyword nama file & MobileNet siap, gunakan klasifikasi lokal
         if (!detectedKeyword && net) {
             const tempImg = new Image();
             tempImg.src = imageSrc;
@@ -747,7 +815,7 @@ function triggerAIScanner(imageSrc, filename) {
         } else {
             finalizeScan(detectedKeyword);
         }
-    }, 2000);
+    }, 1500);
 }
 
 function finalizeScan(detectedKeyword) {

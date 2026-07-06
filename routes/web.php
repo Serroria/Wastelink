@@ -8,9 +8,17 @@ use App\Http\Controllers\BankSampahController;
 use App\Http\Controllers\UmkmController;
 use App\Http\Controllers\PembeliController;
 use App\Http\Controllers\TrashController;
+use App\Http\Controllers\SettingsController;
 
 // Halaman utama publik (Dashboard Dampak)
 Route::get('/', [DashboardDampakController::class, 'index'])->name('home');
+Route::get('/dampak/realtime', [DashboardDampakController::class, 'dampakRealtime'])->middleware('auth')->name('dampak.realtime');
+
+// Universal Settings (semua role)
+Route::middleware('auth')->group(function () {
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+});
 
 // Auth Page
 Route::get('/login', function () {
@@ -36,7 +44,7 @@ Route::get('/reset-password/{token}', [\App\Http\Controllers\PasswordResetContro
 Route::post('/reset-password', [\App\Http\Controllers\PasswordResetController::class, 'update'])->middleware('guest')->name('password.update');
 
 // ===== WARGA =====
-Route::prefix('warga')->name('warga.')->group(function () {
+Route::prefix('warga')->name('warga.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [WargaController::class, 'dashboard'])->name('dashboard');
     Route::get('/setor', [WargaController::class, 'setor'])->name('setor');
     Route::post('/setor', [WargaController::class, 'storDeposit'])->name('setor.store');
@@ -50,9 +58,9 @@ Route::prefix('warga')->name('warga.')->group(function () {
 });
 
 //ai detection image
-Route::post('/warga/setor/analyze-ai', [TrashController::class, 'analyzeAi'])->name('warga.setor.analyze-ai');
+Route::post('/warga/setor/analyze-ai', [TrashController::class, 'analyzeAi'])->name('warga.setor.analyze-ai')->middleware('auth');
 // ===== BANK SAMPAH =====
-Route::prefix('bank-sampah')->name('bank-sampah.')->group(function () {
+Route::prefix('bank-sampah')->name('bank-sampah.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [BankSampahController::class, 'dashboard'])->name('dashboard');
     Route::get('/verifikasi', [BankSampahController::class, 'verifikasi'])->name('verifikasi');
     Route::post('/verifikasi/{id}', [BankSampahController::class, 'processDeposit'])->name('verifikasi.process');
@@ -67,7 +75,7 @@ Route::prefix('bank-sampah')->name('bank-sampah.')->group(function () {
 });
 
 // ===== UMKM MITRA =====
-Route::prefix('umkm')->name('umkm.')->group(function () {
+Route::prefix('umkm')->name('umkm.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [UmkmController::class, 'dashboard'])->name('dashboard');
     Route::post('/validate-voucher', [UmkmController::class, 'validateVoucher'])->name('validate-voucher');
     Route::post('/claim-settlement', [UmkmController::class, 'claimSettlement'])->name('claim-settlement');
@@ -78,7 +86,7 @@ Route::prefix('umkm')->name('umkm.')->group(function () {
 });
 
 // ===== PEMBELI INDUSTRI =====
-Route::prefix('pembeli')->name('pembeli.')->group(function () {
+Route::prefix('pembeli')->name('pembeli.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [PembeliController::class, 'dashboard'])->name('dashboard');
     Route::post('/buy/{id}', [PembeliController::class, 'buyListing'])->name('buy');
     Route::post('/topup', [PembeliController::class, 'topup'])->name('topup');
