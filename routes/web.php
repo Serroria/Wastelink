@@ -58,6 +58,7 @@ Route::prefix('bank-sampah')->name('bank-sampah.')->group(function () {
     Route::post('/verifikasi/{id}', [BankSampahController::class, 'processDeposit'])->name('verifikasi.process');
     Route::get('/stok', [BankSampahController::class, 'stok'])->name('stok');
     Route::post('/stok/listing', [BankSampahController::class, 'createListing'])->name('stok.listing');
+    Route::post('/stok/{id}/cancel', [BankSampahController::class, 'cancelListing'])->name('stok.cancel');
     Route::get('/settlement', [BankSampahController::class, 'settlement'])->name('settlement');
     Route::post('/settlement/withdraw/{id}', [BankSampahController::class, 'approveWithdrawal'])->name('settlement.withdraw');
     Route::post('/settlement/pay/{id}', [BankSampahController::class, 'paySettlement'])->name('settlement.pay');
@@ -72,10 +73,13 @@ Route::prefix('umkm')->name('umkm.')->group(function () {
     Route::post('/claim-settlement', [UmkmController::class, 'claimSettlement'])->name('claim-settlement');
     Route::post('/register', [UmkmController::class, 'register'])->name('register');
     Route::post('/product', [UmkmController::class, 'storeProduct'])->name('product.store');
+    Route::put('/product/{id}', [UmkmController::class, 'updateProduct'])->name('product.update'); // Baris baru
+    Route::delete('/product/{id}', [UmkmController::class, 'deleteProduct'])->name('product.destroy');
 });
 
 // ===== PEMBELI INDUSTRI =====
 Route::prefix('pembeli')->name('pembeli.')->group(function () {
     Route::get('/dashboard', [PembeliController::class, 'dashboard'])->name('dashboard');
     Route::post('/buy/{id}', [PembeliController::class, 'buyListing'])->name('buy');
-});
+    Route::post('/topup', [PembeliController::class, 'topup'])->name('topup');
+    });

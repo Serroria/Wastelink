@@ -153,9 +153,44 @@ class BankSampahController extends Controller
                 }
             }
         }
-
-        return view('bank_sampah.stok', compact('wasteTypes', 'listings', 'stokPerType'));
+         $usedListings = WasteListing::whereIn('status', ['available', 'sold'])->get();
+    foreach ($usedListings as $listing) {
+        $details = is_array($listing->weight_details) ? $listing->weight_details : json_decode($listing->weight_details, true);
+        if ($details) {
+            foreach ($details as $typeId => $weight) {
+                // Pastikan stok tidak minus
+                if (isset($stokPerType[$typeId])) {
+                    $stokPerType[$typeId] = max(0, $stokPerType[$typeId] - $weight);
+                }
+            }
+        }
     }
+    //  dd([
+    //     'total_deposit' => $stokPerType, // Lihat stok dari setoran warga
+    //     'used_listings' => $usedListings->pluck('title', 'status'), // Lihat listing apa yang mengurangi stok
+    //     'stok_akhir' => $stokPerType // Lihat hasil akhir setelah dikurangi
+    // ]);
+
+     return view('bank_sampah.stok', compact('wasteTypes', 'listings', 'stokPerType'));
+    }
+
+    /**
+ * Batalkan atau hapus listing yang belum terjual
+ */
+public function cancelListing($id)
+{
+    $listing = WasteListing::findOrFail($id);
+
+    // Hanya izinkan pembatalan jika statusnya masih 'available'
+    if ($listing->status !== 'available') {
+        return back()->with('error', 'Tidak dapat membatalkan listing yang sudah terjual.');
+    }
+
+    $listing->update(['status' => 'cancelled']);
+
+
+    return redirect()->route('bank-sampah.stok')->with('success', 'Listing berhasil dibatalkan. Stok telah dikembalikan ke gudang.');
+}
     public function processDeposit(Request $request, $id)
     {
         $deposit = WasteDeposit::findOrFail($id);

@@ -19,7 +19,7 @@
                 <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-center">
                     <div class="text-xl mb-1">{{ $type->icon }}</div>
                     <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{{ $type->name }}</div>
-                    <div class="text-sm font-black text-slate-800">{{ number_format($stokPerType[$type->id] ?? 0, 1, ',', '.') }} kg</div>
+                    <div class="text-sm font-black text-aslate-800">{{ number_format($stokPerType[$type->id] ?? 0, 1, ',', '.') }} kg</div>
                     <p class="text-[9px] text-emerald-600 font-semibold mt-1">Rp {{ number_format(($stokPerType[$type->id] ?? 0) * $type->price_per_kg, 0, ',', '.') }}</p>
                 </div>
             @endforeach
@@ -30,7 +30,7 @@
         {{-- BUAT LISTING BARU --}}
         <div class="md:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">📤 Buat Penjualan Baru</h3>
-            
+
             <form action="{{ route('bank-sampah.stok.listing') }}" method="POST" class="space-y-4">
                 @csrf
                 <div>
@@ -62,7 +62,7 @@
         {{-- LISTING AKTIF & RIWAYAT --}}
         <div class="md:col-span-3 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">📋 Listing Jual & Riwayat</h3>
-            
+
             @if($listings->isEmpty())
                 <div class="text-center py-12 text-slate-400 text-sm">
                     Belum ada postingan penjualan.
@@ -103,6 +103,18 @@
                                     <span class="text-[10px] text-slate-400">Total Harga Penjualan:</span>
                                     <div class="font-extrabold text-emerald-600 text-sm">Rp {{ number_format($listing->total_price, 0, ',', '.') }}</div>
                                 </div>
+                            {{-- Bagian Aksi & Status --}}
+                                <div class="flex items-center gap-3">
+                                    @if($listing->status === 'available')
+                                        <form action="{{ route('bank-sampah.stok.cancel', $listing->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan penjualan ini? Stok akan dikembalikan ke gudang.');">
+                                            @csrf
+                                            <button type="submit" class="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 font-bold rounded-lg text-[10px] transition-all">
+                                                ✕ Batalkan
+                                            </button>
+                                        </form>
+                                    @endif
+
+
                                 @if($listing->sold_at)
                                     <span class="text-[9px] text-slate-400">Terjual pada {{ $listing->sold_at->format('d M Y') }}</span>
                                 @endif

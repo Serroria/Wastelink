@@ -21,4 +21,6 @@ class WasteListing extends Model
     {
         return $this->belongsTo(User::class, 'buyer_id');
     }
+
+
 }

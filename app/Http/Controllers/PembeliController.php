@@ -7,6 +7,8 @@ use App\Models\SystemStat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\WasteType;
+use App\Models\WalletTransaction;
+use Illuminate\Support\Str;
 
 class PembeliController extends Controller
 {
@@ -18,8 +20,9 @@ class PembeliController extends Controller
         $user = Auth::user();
         $listings = WasteListing::orderByDesc('created_at')->get();
         $wasteTypes = WasteType::all()->keyBy('id');
+        $transactions = WalletTransaction::where('user_id', $user->id)->orderByDesc('created_at')->get();
 
-        return view('pembeli.dashboard', compact('user', 'listings', 'wasteTypes'));
+        return view('pembeli.dashboard', compact('user', 'listings', 'wasteTypes', 'transactions'));
     }
 
     /**
@@ -39,6 +42,11 @@ class PembeliController extends Controller
             return back()->with('error', 'Saldo kas tidak mencukupi untuk membeli listing ini.');
         }
 
+        $stats = SystemStat::firstOrCreate(
+        ['id' => 1],
+        ['bank_sampah_cash' => 0]
+    );
+
         $user->cash_balance -= $listing->total_price;
         $user->save();
 
@@ -48,13 +56,36 @@ class PembeliController extends Controller
             'sold_at' => now(),
         ]);
 
-        // Tambahkan ke kas bank sampah
+       // Tambahkan ke kas bank sampah
         $stats = SystemStat::first();
         if ($stats) {
             $stats->bank_sampah_cash += $listing->total_price;
             $stats->save();
         }
 
-        return back()->with('success', 'Pembelian berhasil! Rp ' . number_format($listing->total_price, 0, ',', '.') . ' telah ditransfer ke kas Bank Sampah.');
+        WalletTransaction::create([
+            'user_id' => $user->id,
+            'transaction_type' => 'pembelian_sampah',
+            'biller_name' => 'Marketplace B2B (Pembelian Listing)',
+            'account_number' => $listing->title,
+            'points_spent' => 0, // Pembelian B2B menggunakan uang, bukan poin
+            'nominal_rp' => $listing->total_price,
+            'ref_number' => 'B2B-' . strtoupper(Str::random(8)),
+            'status' => 'success',
+        ]);
+
+   return redirect()->route('pembeli.dashboard')->with('success', 'Pembelian berhasil! Saldo kas Bank Sampah telah diperbarui.');}
+
+    public function topup(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:1000'
+        ]);
+
+        $user = Auth::user();
+        $user->cash_balance += $request->amount;
+        $user->save();
+
+        return back()->with('success', 'Top-up berhasil! Saldo kas perusahaan Anda telah ditambahkan sebesar Rp ' . number_format($request->amount, 0, ',', '.') . '.');
     }
 }

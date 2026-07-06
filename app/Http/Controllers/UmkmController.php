@@ -86,6 +86,48 @@ class UmkmController extends Controller
     }
 
     /**
+     * UMKM Memperbarui Data Produk/Voucher
+     */
+    public function updateProduct(Request $request, $id)
+    {
+        $partner = UmkmPartner::where('user_id', Auth::id())->first();
+        $product = UmkmProduct::findOrFail($id);
+
+        // Keamanan: Pastikan produk ini benar-benar milik UMKM yang sedang login
+        if (!$partner || $product->umkm_partner_id !== $partner->id) {
+            return back()->with('error', 'Akses ditolak. Anda tidak dapat mengubah produk ini.');
+        }
+
+        $product->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'points_cost' => $request->points_cost,
+            'price_value' => $request->points_cost * 10, // Menyesuaikan dengan harga poin baru
+            'stock' => $request->stock
+        ]);
+
+        return back()->with('success', 'Produk/Voucher berhasil diperbarui!');
+    }
+
+    /**
+     * UMKM Menghapus Produk/Voucher
+     */
+    public function deleteProduct($id)
+    {
+        $partner = UmkmPartner::where('user_id', Auth::id())->first();
+        $product = UmkmProduct::findOrFail($id);
+
+        // Keamanan: Pastikan produk ini benar-benar milik UMKM yang sedang login
+        if (!$partner || $product->umkm_partner_id !== $partner->id) {
+            return back()->with('error', 'Akses ditolak. Anda tidak dapat menghapus produk ini.');
+        }
+
+        $product->delete();
+
+        return back()->with('success', 'Produk/Voucher berhasil dihapus dari katalog.');
+    }
+
+    /**
      * Validasi kode voucher warga.
      */
     public function validateVoucher(Request $request)
