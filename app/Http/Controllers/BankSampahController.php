@@ -219,75 +219,76 @@ class BankSampahController extends Controller
 
             return back()->with('success', 'Status diperbarui: Kurir sedang menuju lokasi warga.');
         }
+// TAHAP 2: Simpan Timbangan Aktual (Belum kasih poin)
+    if ($action === 'timbang' || $action === 'revise') {
+        $weightDetails = [];
+        $totalPoints = 0;
 
-        // TAHAP 2: Simpan Timbangan Aktual (Belum kasih poin)
-        if ($action === 'timbang' || $action === 'revise') {
-            $weightDetails = [];
-            $totalPoints = 0;
-
-            foreach ($request->input('weights', []) as $typeId => $weight) {
-                $weight = floatval($weight);
-                if ($weight > 0) {
-                    $weightDetails[$typeId] = $weight;
-                    if (isset($wasteTypes[$typeId])) {
-                        $totalPoints += (int) ($weight * $wasteTypes[$typeId]->points_per_kg);
-                    }
+        foreach ($request->input('weights', []) as $typeId => $weight) {
+            $weight = floatval($weight);
+            if ($weight > 0) {
+                $weightDetails[$typeId] = $weight;
+                if (isset($wasteTypes[$typeId])) {
+                    $totalPoints += (int) ($weight * $wasteTypes[$typeId]->points_per_kg);
                 }
             }
-
-            $deposit->update([
-                'collector_id' => $operator->id,
-                'status' => $action === 'timbang' ? 'ditimbang' : 'revised',
-                'weight_details' => json_encode($weightDetails),
-                'total_points' => $totalPoints,
-                'notes' => $request->input('notes', $deposit->notes),
-            ]);
-            // Jika status direvisi dari ditimbang, kita kembalikan ke ditimbang agar form setujui tetap muncul
-            if ($action === 'revise') {
-                $deposit->update(['status' => 'ditimbang']);
-            }
-
-            return back()->with('success', 'Timbangan aktual berhasil disimpan.');
         }
 
-        // TAHAP 3: Kreditkan Poin ke Warga (Approved)
-        if ($action === 'approve') {
-            $result = DB::transaction(function () use ($id): array {
-                $deposit = WasteDeposit::with('user')->lockForUpdate()->findOrFail($id);
+        $deposit->update([
+            'collector_id' => $operator->id,
+            'status' => $action === 'timbang' ? 'ditimbang' : 'revised',
+            // PERBAIKAN: Langsung masukkan array $weightDetails
+            'weight_details' => $weightDetails,
+            'total_points' => $totalPoints,
+            'notes' => $request->input('notes', $deposit->notes),
+        ]);
 
-                if (in_array($deposit->status, ['approved', 'didistribusikan'], true)) {
-                    return ['success' => 'Setoran ini sudah pernah disetujui.'];
-                }
+        if ($action === 'revise') {
+            $deposit->update(['status' => 'ditimbang']);
+        }
 
-                if ($deposit->status !== 'ditimbang') {
-                    return ['error' => 'Setoran harus ditimbang terlebih dahulu sebelum disetujui.'];
-                }
+        return back()->with('success', 'Timbangan aktual berhasil disimpan.');
+    }
 
-                $warga = User::lockForUpdate()->findOrFail($deposit->user_id);
-                $warga->point_balance += $deposit->total_points;
-                $warga->save();
+    // TAHAP 3: Kreditkan Poin ke Warga (Approved)
+    if ($action === 'approve') {
+        $result = DB::transaction(function () use ($id): array {
+            $deposit = WasteDeposit::with('user')->lockForUpdate()->findOrFail($id);
 
-                $weightDetails = $deposit->weight_details ?: [];
-                $totalWeight = array_sum($weightDetails);
-
-                $stats = SystemStat::first();
-                if ($stats) {
-                    $stats->total_landfill_saved += $totalWeight;
-                    $stats->total_co2_saved += $totalWeight * 2.5;
-                    $stats->save();
-                }
-
-                $deposit->update(['status' => 'approved']);
-
-                return ['success' => 'Poin berhasil dikreditkan ke dompet warga.'];
-            });
-
-            if (isset($result['error'])) {
-                return back()->with('error', $result['error']);
+            if (in_array($deposit->status, ['approved', 'didistribusikan'], true)) {
+                return ['success' => 'Setoran ini sudah pernah disetujui.'];
             }
 
-            return back()->with('success', $result['success']);
+            if ($deposit->status !== 'ditimbang') {
+                return ['error' => 'Setoran harus ditimbang terlebih dahulu sebelum disetujui.'];
+            }
+
+            $warga = User::lockForUpdate()->findOrFail($deposit->user_id);
+            $warga->point_balance += $deposit->total_points;
+            $warga->save();
+
+            // PERBAIKAN: Langsung panggil karena model sudah mengubahnya jadi array
+            $weightDetails = $deposit->weight_details ?: [];
+            $totalWeight = array_sum($weightDetails);
+
+            $stats = SystemStat::first();
+            if ($stats) {
+                $stats->total_landfill_saved += $totalWeight;
+                $stats->total_co2_saved += $totalWeight * 2.5;
+                $stats->save();
+            }
+
+            $deposit->update(['status' => 'approved']);
+
+            return ['success' => 'Poin berhasil dikreditkan ke dompet warga.'];
+        });
+
+        if (isset($result['error'])) {
+            return back()->with('error', $result['error']);
         }
+
+        return back()->with('success', $result['success']);
+    }
 
         // TAHAP 4: Distribusi ke Industri
         if ($action === 'distribusi') {

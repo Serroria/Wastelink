@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class WasteListing extends Model
 {
-    protected $fillable = ['title', 'description', 'weight_details'=> 'array', 'total_price', 'status', 'buyer_id', 'sold_at'];
+    protected $fillable = ['title', 'description', 'weight_details', 'total_price', 'status', 'buyer_id', 'sold_at'];
 
     protected function casts(): array
     {
