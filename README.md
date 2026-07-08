@@ -1,58 +1,147 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TIECO - Platform Digital Bank Sampah Terintegrasi
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+TIECO adalah aplikasi web berbasis Laravel untuk mensimulasikan ekosistem bank sampah digital yang menghubungkan warga, operator bank sampah, UMKM mitra, dan pembeli industri. Aplikasi ini dirancang untuk mendukung pengelolaan sampah terpilah, insentif poin warga, katalog voucher UMKM, penjualan stok sampah B2B, settlement, dan laporan dampak lingkungan.
 
-## About Laravel
+## Fitur Utama
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Dashboard publik dampak lingkungan dan ekonomi sirkular.
+- Login demo multi-role: warga, bank sampah, UMKM, dan pembeli industri.
+- Pengajuan setor sampah warga dengan foto, berat per jenis sampah, lokasi, dan jadwal.
+- Verifikasi setoran oleh operator bank sampah dengan alur status operasional.
+- Saldo poin warga, penarikan tunai, voucher UMKM, dan pembayaran tagihan simulatif.
+- Katalog UMKM dan validasi voucher oleh mitra UMKM.
+- Klaim settlement UMKM dan pembayaran settlement oleh bank sampah.
+- Manajemen stok gudang dan listing penjualan sampah ke pembeli industri.
+- Top up saldo kas virtual pembeli industri untuk simulasi transaksi B2B.
+- Laporan dampak real-time untuk semua role.
+- Proteksi route berbasis role.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Teknologi
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.3+
+- Laravel 11
+- SQLite untuk database lokal
+- PHPUnit
+- Laravel Pint
+- Tailwind CSS via CDN untuk UI demo
+- Chart.js via CDN untuk grafik laporan dampak
 
-## Learning Laravel
+## Persyaratan Lokal
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Pastikan extension PHP berikut aktif:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+pdo_sqlite
+sqlite3
+pdo_mysql atau pdo_pgsql opsional jika ingin memakai database lain
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Pada Laragon, extension SQLite dapat diaktifkan di file `php.ini` dengan membuka komentar:
 
-## Contributing
+```ini
+extension=pdo_sqlite
+extension=sqlite3
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Instalasi
 
-## Code of Conduct
+Clone repository, lalu install dependency:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+composer install
+npm install
+```
 
-## Security Vulnerabilities
+Salin environment:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+copy .env.example .env
+php artisan key:generate
+```
 
-## License
+Konfigurasi SQLite lokal pada `.env`:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```env
+DB_CONNECTION=sqlite
+DB_DATABASE=C:/laragon/www/ItClubProject/database/itclub.sqlite
+```
+
+Buat file database jika belum ada:
+
+```bash
+type nul > database\itclub.sqlite
+```
+
+Jalankan migration dan seeder:
+
+```bash
+php artisan migrate --seed
+```
+
+Jalankan aplikasi:
+
+```bash
+php artisan serve
+```
+
+Aplikasi dapat dibuka di:
+
+```text
+http://127.0.0.1:8000
+```
+
+## Akun Demo
+
+Halaman login menyediakan pilihan role dan akan mengisi kredensial demo secara otomatis.
+
+| Role | Identifier | Password |
+| --- | --- | --- |
+| Warga | 081234567890 | password |
+| Bank Sampah | hendra@tieco.id | password |
+| UMKM | sri@tieco.id | password |
+| Pembeli Industri | daur@tieco.id | password |
+
+## Alur Demo Singkat
+
+1. Login sebagai warga, ajukan setor sampah, lalu cek dashboard warga.
+2. Login sebagai bank sampah, verifikasi setoran sampai status disetujui.
+3. Buka manajemen stok, buat listing sampah untuk marketplace B2B.
+4. Login sebagai pembeli industri, top up saldo kas virtual, lalu beli listing.
+5. Login sebagai warga, tukar poin menjadi voucher UMKM.
+6. Login sebagai UMKM, validasi voucher dan ajukan settlement.
+7. Login sebagai bank sampah, bayar settlement atau approve withdrawal.
+8. Buka Laporan Dampak untuk melihat ringkasan dampak per role.
+
+## Modul AI Deteksi Sampah
+
+Halaman setor sampah memiliki modul Smart AI yang mencoba mendeteksi jenis sampah dari gambar. Backend AI diarahkan ke:
+
+```text
+http://127.0.0.1:5000/predict
+```
+
+Jika server AI tidak aktif, aplikasi tetap menyediakan fallback di sisi klien dan form setor tetap dapat digunakan.
+
+## Testing
+
+Jalankan seluruh test:
+
+```bash
+php artisan test --compact
+```
+
+Jalankan formatter PHP:
+
+```bash
+vendor/bin/pint --dirty --format agent
+```
+
+## Catatan Deployment
+
+Untuk demo lomba, pastikan:
+
+- File `.env` production tidak memakai kredensial demo sensitif.
+- Extension SQLite aktif jika menggunakan SQLite.
+- Database sudah dimigrasi dan di-seed bila perlu.
+- Server AI lokal hanya dipakai sebagai modul opsional atau disiapkan terpisah.
+- CDN Tailwind, Bootstrap Icons, dan Chart.js dapat diakses dari jaringan demo.

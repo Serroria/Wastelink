@@ -1,4 +1,4 @@
-?@extends('layouts.app')
+@extends('layouts.app')
 @section('title', 'Marketplace B2B — TIECO')
 
 @section('content')
@@ -208,4 +208,3 @@
         </div>
     </div>
 @endsection
-

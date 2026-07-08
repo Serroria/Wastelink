@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Settlement;
+use App\Models\SystemStat;
+use App\Models\UmkmPartner;
 use App\Models\User;
-use App\Models\WasteType;
 use App\Models\WasteDeposit;
 use App\Models\WasteListing;
-use App\Models\Voucher;
+use App\Models\WasteType;
 use App\Models\Withdrawal;
-use App\Models\Settlement;
-use App\Models\UmkmPartner;
-use App\Models\SystemStat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class BankSampahController extends Controller
 {
@@ -52,7 +52,7 @@ class BankSampahController extends Controller
 
     //     return view('bank_sampah.verifikasi', compact('deposits', 'wasteTypes'));
     // }
- public function verifikasi()
+    public function verifikasi()
     {
         // Menggunakan CASE WHEN agar kompatibel dengan PostgreSQL (Supabase)
         $deposits = WasteDeposit::with('user')
@@ -142,55 +142,35 @@ class BankSampahController extends Controller
         $wasteTypes = WasteType::all();
         $listings = WasteListing::orderByDesc('created_at')->get();
 
-        // Hitung total stok dari deposit yang sudah approved
-        $stokPerType = [];
-        $approvedDeposits = WasteDeposit::where('status', 'approved')->get();
-        foreach ($approvedDeposits as $dep) {
-            $details = is_array($dep->weight_details) ? $dep->weight_details : json_decode($dep->weight_details, true);
-            if ($details) {
-                foreach ($details as $typeId => $weight) {
-                    $stokPerType[$typeId] = ($stokPerType[$typeId] ?? 0) + $weight;
-                }
-            }
-        }
-         $usedListings = WasteListing::whereIn('status', ['available', 'sold'])->get();
-    foreach ($usedListings as $listing) {
-        $details = is_array($listing->weight_details) ? $listing->weight_details : json_decode($listing->weight_details, true);
-        if ($details) {
-            foreach ($details as $typeId => $weight) {
-                // Pastikan stok tidak minus
-                if (isset($stokPerType[$typeId])) {
-                    $stokPerType[$typeId] = max(0, $stokPerType[$typeId] - $weight);
-                }
-            }
-        }
-    }
-    //  dd([
-    //     'total_deposit' => $stokPerType, // Lihat stok dari setoran warga
-    //     'used_listings' => $usedListings->pluck('title', 'status'), // Lihat listing apa yang mengurangi stok
-    //     'stok_akhir' => $stokPerType // Lihat hasil akhir setelah dikurangi
-    // ]);
+        $stokPerType = $this->availableStockByWasteType();
 
-     return view('bank_sampah.stok', compact('wasteTypes', 'listings', 'stokPerType'));
+        return view('bank_sampah.stok', compact('wasteTypes', 'listings', 'stokPerType'));
     }
 
     /**
- * Batalkan atau hapus listing yang belum terjual
- */
-public function cancelListing($id)
-{
-    $listing = WasteListing::findOrFail($id);
+     * Batalkan atau hapus listing yang belum terjual
+     */
+    public function cancelListing($id)
+    {
+        $cancelled = DB::transaction(function () use ($id): bool {
+            $listing = WasteListing::lockForUpdate()->findOrFail($id);
 
-    // Hanya izinkan pembatalan jika statusnya masih 'available'
-    if ($listing->status !== 'available') {
-        return back()->with('error', 'Tidak dapat membatalkan listing yang sudah terjual.');
+            if ($listing->status !== 'available') {
+                return false;
+            }
+
+            $listing->update(['status' => 'cancelled']);
+
+            return true;
+        });
+
+        if (! $cancelled) {
+            return back()->with('error', 'Tidak dapat membatalkan listing yang sudah terjual.');
+        }
+
+        return redirect()->route('bank-sampah.stok')->with('success', 'Listing berhasil dibatalkan. Stok telah dikembalikan ke gudang.');
     }
 
-    $listing->update(['status' => 'cancelled']);
-
-
-    return redirect()->route('bank-sampah.stok')->with('success', 'Listing berhasil dibatalkan. Stok telah dikembalikan ke gudang.');
-}
     public function processDeposit(Request $request, $id)
     {
         $deposit = WasteDeposit::findOrFail($id);
@@ -202,8 +182,9 @@ public function cancelListing($id)
         if ($action === 'otw') {
             $deposit->update([
                 'collector_id' => $operator->id,
-                'status' => 'menuju_lokasi'
+                'status' => 'menuju_lokasi',
             ]);
+
             return back()->with('success', 'Status diperbarui: Kurir sedang menuju lokasi warga.');
         }
 
@@ -217,7 +198,7 @@ public function cancelListing($id)
                 if ($weight > 0) {
                     $weightDetails[$typeId] = $weight;
                     if (isset($wasteTypes[$typeId])) {
-                        $totalPoints += (int)($weight * $wasteTypes[$typeId]->points_per_kg);
+                        $totalPoints += (int) ($weight * $wasteTypes[$typeId]->points_per_kg);
                     }
                 }
             }
@@ -239,15 +220,23 @@ public function cancelListing($id)
 
         // TAHAP 3: Kreditkan Poin ke Warga (Approved)
         if ($action === 'approve') {
-            if ($deposit->status !== 'approved' && $deposit->status !== 'didistribusikan') {
-                // 1. Tambah poin
-                $warga = $deposit->user;
+            $result = DB::transaction(function () use ($id): array {
+                $deposit = WasteDeposit::with('user')->lockForUpdate()->findOrFail($id);
+
+                if (in_array($deposit->status, ['approved', 'didistribusikan'], true)) {
+                    return ['success' => 'Setoran ini sudah pernah disetujui.'];
+                }
+
+                if ($deposit->status !== 'ditimbang') {
+                    return ['error' => 'Setoran harus ditimbang terlebih dahulu sebelum disetujui.'];
+                }
+
+                $warga = User::lockForUpdate()->findOrFail($deposit->user_id);
                 $warga->point_balance += $deposit->total_points;
                 $warga->save();
 
-                // 2. Update statistik sistem
-                $weightDetails = is_array($deposit->weight_details) ? $deposit->weight_details : json_decode($deposit->weight_details, true);
-                $totalWeight = array_sum($weightDetails ?: []);
+                $weightDetails = $deposit->weight_details ?: [];
+                $totalWeight = array_sum($weightDetails);
 
                 $stats = SystemStat::first();
                 if ($stats) {
@@ -256,15 +245,22 @@ public function cancelListing($id)
                     $stats->save();
                 }
 
-                // 3. Ubah status
                 $deposit->update(['status' => 'approved']);
+
+                return ['success' => 'Poin berhasil dikreditkan ke dompet warga.'];
+            });
+
+            if (isset($result['error'])) {
+                return back()->with('error', $result['error']);
             }
-            return back()->with('success', 'Poin berhasil dikreditkan ke dompet warga.');
+
+            return back()->with('success', $result['success']);
         }
 
         // TAHAP 4: Distribusi ke Industri
         if ($action === 'distribusi') {
             $deposit->update(['status' => 'didistribusikan']);
+
             return back()->with('success', 'Status diperbarui: Didistribusikan ke Industri.');
         }
 
@@ -275,6 +271,7 @@ public function cancelListing($id)
                 'status' => 'rejected',
                 'notes' => $request->input('notes', 'Sampah tidak memenuhi syarat atau kotor.'),
             ]);
+
             return back()->with('success', 'Setoran telah ditolak.');
         }
 
@@ -286,13 +283,25 @@ public function cancelListing($id)
      */
     public function createListing(Request $request)
     {
+        $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'weights' => ['required', 'array'],
+            'weights.*' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
         $wasteTypes = WasteType::all()->keyBy('id');
         $weightDetails = [];
         $totalPrice = 0;
+        $availableStock = $this->availableStockByWasteType();
 
         foreach ($request->input('weights', []) as $typeId => $weight) {
             $weight = floatval($weight);
             if ($weight > 0) {
+                if ($weight > ($availableStock[$typeId] ?? 0)) {
+                    return back()->with('error', 'Berat listing melebihi stok gudang yang tersedia.');
+                }
+
                 $weightDetails[$typeId] = $weight;
                 if (isset($wasteTypes[$typeId])) {
                     $totalPrice += $weight * $wasteTypes[$typeId]->price_per_kg;
@@ -300,15 +309,43 @@ public function cancelListing($id)
             }
         }
 
-        WasteListing::create([
-            'title' => $request->input('title', 'Sampah Terpilah'),
-            'description' => $request->input('description', ''),
-            'weight_details' => json_encode($weightDetails),
-            'total_price' => $totalPrice,
-            'status' => 'available',
-        ]);
+        if ($weightDetails === []) {
+            return back()->with('error', 'Masukkan minimal satu jenis sampah untuk dijual.');
+        }
+
+        DB::transaction(function () use ($request, $weightDetails, $totalPrice): void {
+            WasteListing::create([
+                'title' => $request->input('title', 'Sampah Terpilah'),
+                'description' => $request->input('description', ''),
+                'weight_details' => $weightDetails,
+                'total_price' => $totalPrice,
+                'status' => 'available',
+            ]);
+        });
 
         return redirect()->route('bank-sampah.stok')->with('success', 'Listing berhasil dibuat.');
+    }
+
+    /**
+     * @return array<int, float>
+     */
+    private function availableStockByWasteType(): array
+    {
+        $stockByType = [];
+
+        WasteDeposit::where('status', 'approved')->get()->each(function (WasteDeposit $deposit) use (&$stockByType): void {
+            foreach (($deposit->weight_details ?: []) as $typeId => $weight) {
+                $stockByType[$typeId] = ($stockByType[$typeId] ?? 0) + (float) $weight;
+            }
+        });
+
+        WasteListing::whereIn('status', ['available', 'sold'])->get()->each(function (WasteListing $listing) use (&$stockByType): void {
+            foreach (($listing->weight_details ?: []) as $typeId => $weight) {
+                $stockByType[$typeId] = max(0, ($stockByType[$typeId] ?? 0) - (float) $weight);
+            }
+        });
+
+        return $stockByType;
     }
 
     /**
@@ -328,12 +365,14 @@ public function cancelListing($id)
     public function approvePartner($id)
     {
         UmkmPartner::findOrFail($id)->update(['status' => 'approved']);
+
         return back()->with('success', 'Mitra UMKM berhasil disetujui!');
     }
 
     public function rejectPartner($id)
     {
         UmkmPartner::findOrFail($id)->update(['status' => 'rejected']);
+
         return back()->with('success', 'Pengajuan Mitra UMKM ditolak.');
     }
 
@@ -342,17 +381,30 @@ public function cancelListing($id)
      */
     public function approveWithdrawal($id)
     {
-        $withdrawal = Withdrawal::findOrFail($id);
-        $stats = SystemStat::first();
+        $result = DB::transaction(function () use ($id): array {
+            $withdrawal = Withdrawal::lockForUpdate()->findOrFail($id);
+            $stats = SystemStat::lockForUpdate()->first();
 
-        if ($stats && $stats->bank_sampah_cash >= $withdrawal->equivalent_rp) {
+            if (! $stats || $stats->bank_sampah_cash < $withdrawal->equivalent_rp) {
+                return ['error' => 'Kas bank sampah tidak mencukupi.'];
+            }
+
+            if ($withdrawal->status !== 'pending') {
+                return ['success' => 'Penarikan tunai sudah pernah diproses.'];
+            }
+
             $withdrawal->update(['status' => 'approved']);
             $stats->bank_sampah_cash -= $withdrawal->equivalent_rp;
             $stats->save();
-            return back()->with('success', 'Penarikan tunai disetujui.');
+
+            return ['success' => 'Penarikan tunai disetujui.'];
+        });
+
+        if (isset($result['error'])) {
+            return back()->with('error', $result['error']);
         }
 
-        return back()->with('error', 'Kas bank sampah tidak mencukupi.');
+        return back()->with('success', $result['success']);
     }
 
     /**
@@ -360,16 +412,29 @@ public function cancelListing($id)
      */
     public function paySettlement($id)
     {
-        $settlement = Settlement::findOrFail($id);
-        $stats = SystemStat::first();
+        $result = DB::transaction(function () use ($id): array {
+            $settlement = Settlement::lockForUpdate()->findOrFail($id);
+            $stats = SystemStat::lockForUpdate()->first();
 
-        if ($stats && $stats->bank_sampah_cash >= $settlement->total_amount) {
+            if (! $stats || $stats->bank_sampah_cash < $settlement->total_amount) {
+                return ['error' => 'Kas bank sampah tidak mencukupi untuk membayar settlement ini.'];
+            }
+
+            if ($settlement->status !== 'pending') {
+                return ['success' => 'Settlement UMKM sudah pernah diproses.'];
+            }
+
             $settlement->update(['status' => 'paid', 'paid_at' => now()]);
             $stats->bank_sampah_cash -= $settlement->total_amount;
             $stats->save();
-            return back()->with('success', 'Settlement UMKM berhasil dibayar.');
+
+            return ['success' => 'Settlement UMKM berhasil dibayar.'];
+        });
+
+        if (isset($result['error'])) {
+            return back()->with('error', $result['error']);
         }
 
-        return back()->with('error', 'Kas bank sampah tidak mencukupi untuk membayar settlement ini.');
+        return back()->with('success', $result['success']);
     }
 }

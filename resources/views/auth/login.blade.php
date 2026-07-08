@@ -9,7 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
-        tailwind.config = {
+        if (window.tailwind) {
+            tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
@@ -33,6 +34,7 @@
                         'fade-in-up': 'fade-in-up 0.5s ease-out',
                     }
                 }
+            }
             }
         }
     </script>
@@ -65,15 +67,16 @@
 
         <!-- Header -->
         <div class="text-center mb-4">
-            <a href="/" class="inline-flex items-center justify-center w-10 h-10 bg-brand-50 rounded-xl mb-2 sm:mb-3 transition-transform hover:scale-110 hover:rotate-3 duration-300">
+            <div class="inline-flex items-center justify-center w-10 h-10 bg-brand-50 rounded-xl mb-2 sm:mb-3">
                 <span class="text-xl">♻️</span>
-            </a>
+            </div>
             <h1 class="text-xl font-bold text-slate-900 tracking-tight">Selamat Datang</h1>
             <p class="text-[11px] sm:text-xs text-slate-500 mt-1">Masuk untuk melanjutkan ke dasbor</p>
         </div>
 
         <form action="{{ route('demo.switch-role') ?? '#' }}" method="POST" class="space-y-3">
             @csrf
+            <input type="hidden" name="redirect" value="{{ request('redirect') }}">
             
             <!-- Role Selection -->
             <div class="space-y-1 group">
@@ -159,7 +162,8 @@
                     passwordInput.value = demoAccounts[selectedRole].password;
                 }
                 // Update Google Login URL to pass the selected role
-                googleLoginBtn.href = "{{ route('auth.google') }}?role=" + selectedRole;
+                const redirect = @json(request('redirect'));
+                googleLoginBtn.href = "{{ route('auth.google') }}?role=" + selectedRole + (redirect ? '&redirect=' + encodeURIComponent(redirect) : '');
             }
 
             fillDemoData();

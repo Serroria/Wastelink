@@ -1,4 +1,4 @@
-?@extends('layouts.app')
+@extends('layouts.app')
 @section('title', 'Dasbor Operator — TIECO')
 
 @section('content')
@@ -173,4 +173,3 @@
     </div>
 </div>
 @endsection
-

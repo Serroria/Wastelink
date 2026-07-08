@@ -27,7 +27,7 @@ class RegisterController extends Controller
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'string', 'in:warga,bank_sampah,umkm,pembeli'],
+            'role' => ['required', 'string', 'in:warga,umkm'],
         ]);
 
         $user = User::create([

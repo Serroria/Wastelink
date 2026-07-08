@@ -283,6 +283,17 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        if (! window.Chart) {
+            document.querySelectorAll('canvas').forEach(function (canvas) {
+                const fallback = document.createElement('div');
+                fallback.className = 'min-h-[220px] flex items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 text-center text-xs font-semibold text-slate-500';
+                fallback.textContent = 'Grafik belum tersedia karena library visualisasi gagal dimuat.';
+                canvas.replaceWith(fallback);
+            });
+
+            return;
+        }
+
         
         // Data dari backend PHP
         const months = {!! json_encode($months) !!};

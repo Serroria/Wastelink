@@ -8,7 +8,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
+        if (window.tailwind) {
+            tailwind.config = {
             theme: {
                 extend: {
                     colors: {
@@ -38,6 +39,7 @@
                         sans: ['Inter', 'sans-serif'],
                     }
                 }
+            }
             }
         }
     </script>
@@ -72,22 +74,15 @@
             $currentRole = auth()->user()->role; 
             $initials = auth()->user()->initials();
             $profilePhotoUrl = auth()->user()->profilePhotoUrl();
-            $logoRoute = match ($currentRole) {
-                'warga' => route('warga.dashboard'),
-                'bank_sampah' => route('bank-sampah.dashboard'),
-                'umkm' => route('umkm.dashboard'),
-                'pembeli' => route('pembeli.dashboard'),
-                default => '#',
-            };
         @endphp
         
         {{-- SIDEBAR --}}
         <aside id="sidebar" class="w-full md:w-64 bg-white border-r border-slate-100 flex flex-col justify-between shrink-0 h-screen sticky top-0">
             <div class="p-6 overflow-y-auto">
-                <a href="{{ $logoRoute }}" class="flex items-center gap-2 mb-8 whitespace-nowrap hover:opacity-80 transition-opacity">
+                <div class="flex items-center gap-2 mb-8 whitespace-nowrap select-none">
                     <span class="text-2xl shrink-0 select-none">♻️</span>
                     <span class="text-xl font-extrabold tracking-tight text-emerald-600">TIECO</span>
-                </a>
+                </div>
 
                 <nav class="space-y-1 w-full">
                     @if($currentRole === 'warga')
@@ -151,6 +146,11 @@
                             <span>Pengaturan</span>
                         </a>
                     @endif
+
+                    <a href="{{ route('home') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap text-slate-600 hover:bg-slate-50">
+                        <i class="bi bi-house-door text-lg text-slate-400"></i>
+                        <span>Landing Page</span>
+                    </a>
 
                     <a href="{{ route('dampak.realtime') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap {{ request()->routeIs('dampak.realtime') ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-500 rounded-l-none' : 'text-slate-600 hover:bg-slate-50' }}">
                         <i class="bi bi-bar-chart-line text-lg {{ request()->routeIs('dampak.realtime') ? 'text-emerald-600' : 'text-slate-400' }}"></i>

@@ -1,4 +1,4 @@
-?@extends('layouts.app')
+@extends('layouts.app')
 @section('title', 'Settlement & Penarikan — TIECO')
 
 @section('content')
@@ -157,4 +157,3 @@
 </div> {{-- Penutup tag <div class="w-full space-y-6"> yang paling atas --}}
 
 @endsection
-

@@ -13,12 +13,21 @@ class DemoAuthController extends Controller
      */
     public function switchRole(Request $request)
     {
-        $role = $request->input('role', 'warga');
+        $validated = $request->validate([
+            'role' => ['required', 'string', 'in:warga,bank_sampah,umkm,pembeli'],
+            'redirect' => ['nullable', 'string'],
+        ]);
+
+        $role = $validated['role'];
 
         $user = User::where('role', $role)->first();
 
         if ($user) {
             Auth::login($user);
+        }
+
+        if ($request->filled('redirect') && str_starts_with($request->input('redirect'), '/')) {
+            return redirect($request->input('redirect'));
         }
 
         // Redirect ke dashboard sesuai role

@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
+use GuzzleHttp\Client;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteController extends Controller
 {
@@ -16,10 +19,14 @@ class SocialiteController extends Controller
     public function redirect(Request $request)
     {
         // Store the intended role in session if passed via query param
-        if ($request->has('role')) {
+        if (in_array($request->input('role'), ['warga', 'umkm'], true)) {
             session(['intended_role' => $request->input('role')]);
         }
-        
+
+        if ($request->has('redirect') && str_starts_with($request->input('redirect'), '/')) {
+            session(['intended_redirect' => $request->input('redirect')]);
+        }
+
         return Socialite::driver('google')->redirect();
     }
 
@@ -29,25 +36,23 @@ class SocialiteController extends Controller
     public function callback()
     {
         try {
-            // Disable SSL verification for local development (cURL error 60 workaround on XAMPP)
-            $httpClient = new \GuzzleHttp\Client(['verify' => false]);
+            $httpClient = new Client(['verify' => ! app()->environment('local')]);
             $googleUser = Socialite::driver('google')->stateless()->setHttpClient($httpClient)->user();
-            
+
             // Find existing user by google_id or email
             $user = User::where('google_id', $googleUser->id)->orWhere('email', $googleUser->email)->first();
 
-            if (!$user) {
+            if (! $user) {
                 // Determine role
                 $role = session('intended_role', 'warga');
-                
+
                 // Create a new user
                 $user = User::create([
                     'name' => $googleUser->name,
                     'email' => $googleUser->email,
                     'google_id' => $googleUser->id,
                     'role' => $role,
-                    // Password can be null as per migration
-                    'password' => null,
+                    'password' => Hash::make(Str::random(32)),
                 ]);
             } else {
                 // If user exists but google_id is empty, update it
@@ -58,6 +63,10 @@ class SocialiteController extends Controller
 
             // Log the user in
             Auth::login($user);
+
+            if (session()->has('intended_redirect')) {
+                return redirect(session()->pull('intended_redirect'));
+            }
 
             // Redirect based on role
             switch ($user->role) {
@@ -74,7 +83,8 @@ class SocialiteController extends Controller
             }
 
         } catch (\Exception $e) {
-            Log::error('Google Socialite Login Error: ' . $e->getMessage());
+            Log::error('Google Socialite Login Error: '.$e->getMessage());
+
             return redirect()->route('login')->with('error', 'Gagal login melalui Google.');
         }
     }

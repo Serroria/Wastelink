@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\WasteDeposit;
+use App\Models\Settlement;
 use App\Models\SystemStat;
 use App\Models\UmkmPartner;
-use App\Models\Voucher;
-use App\Models\Withdrawal;
 use App\Models\UmkmProduct;
+use App\Models\User;
+use App\Models\Voucher;
+use App\Models\WasteDeposit;
 use App\Models\WasteListing;
-use App\Models\Settlement;
+use App\Models\Withdrawal;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardDampakController extends Controller
@@ -51,8 +52,8 @@ class DashboardDampakController extends Controller
         $end = null;
 
         if ($startDateInput && $endDateInput) {
-            $start = \Carbon\Carbon::parse($startDateInput)->startOfDay();
-            $end = \Carbon\Carbon::parse($endDateInput)->endOfDay();
+            $start = Carbon::parse($startDateInput)->startOfDay();
+            $end = Carbon::parse($endDateInput)->endOfDay();
         }
 
         // Base queries
@@ -90,7 +91,7 @@ class DashboardDampakController extends Controller
 
         // Tentukan format dan labels grafik berdasarkan selisih waktu
         $diffInDays = ($start && $end) ? $start->diffInDays($end) : null;
-        
+
         // Gunakan harian jika rentang <= 31 hari
         if ($diffInDays !== null && $diffInDays <= 31) {
             $format = 'd M';
@@ -155,7 +156,7 @@ class DashboardDampakController extends Controller
             $vouchersTrend[] = isset($vouchersGrouped[$m]) ? $vouchersGrouped[$m]->count() : 0;
 
             // 3. Tunai Rp
-            $cashTrend[] = isset($withdrawalsGrouped[$m]) ? (int)$withdrawalsGrouped[$m]->sum('equivalent_rp') : 0;
+            $cashTrend[] = isset($withdrawalsGrouped[$m]) ? (int) $withdrawalsGrouped[$m]->sum('equivalent_rp') : 0;
         }
 
         // Hitung data spesifik role
@@ -165,12 +166,12 @@ class DashboardDampakController extends Controller
         if ($role === 'warga') {
             $personalDepositsQuery = WasteDeposit::where('user_id', auth()->id())->where('status', 'approved');
             $personalVouchersQuery = Voucher::where('user_id', auth()->id());
-            
+
             if ($start && $end) {
                 $personalDepositsQuery->whereBetween('created_at', [$start, $end]);
                 $personalVouchersQuery->whereBetween('created_at', [$start, $end]);
             }
-            
+
             $personalDeposits = $personalDepositsQuery->get();
             $personalWeight = 0;
             foreach ($personalDeposits as $dep) {
@@ -179,12 +180,12 @@ class DashboardDampakController extends Controller
                     $personalWeight += array_sum($details);
                 }
             }
-            
+
             $roleData = [
                 'personal_weight' => $personalWeight,
                 'personal_deposits_count' => $personalDepositsQuery->count(),
                 'personal_vouchers_count' => $personalVouchersQuery->count(),
-                'personal_points_earned' => $personalDeposits->sum('total_points')
+                'personal_points_earned' => $personalDeposits->sum('total_points'),
             ];
         } elseif ($role === 'bank_sampah') {
             $pendingDeposits = WasteDeposit::where('status', 'pending')->count();
@@ -192,12 +193,12 @@ class DashboardDampakController extends Controller
             $systemStat = SystemStat::first();
             $cashBalance = $systemStat ? $systemStat->bank_sampah_cash : 0;
             $unpaidSettlementAmount = Settlement::where('status', 'pending')->sum('total_amount');
-            
+
             $roleData = [
                 'pending_deposits' => $pendingDeposits,
                 'pending_settlements' => $pendingSettlements,
                 'cash_balance' => $cashBalance,
-                'unpaid_settlement_amount' => $unpaidSettlementAmount
+                'unpaid_settlement_amount' => $unpaidSettlementAmount,
             ];
         } elseif ($role === 'umkm') {
             $partner = UmkmPartner::where('user_id', auth()->id())->first();
@@ -205,35 +206,35 @@ class DashboardDampakController extends Controller
                 $productIds = UmkmProduct::where('umkm_partner_id', $partner->id)->pluck('id');
                 $shopVouchersQuery = Voucher::whereIn('umkm_product_id', $productIds);
                 $shopSettlementsQuery = Settlement::where('umkm_partner_id', $partner->id);
-                
+
                 if ($start && $end) {
                     $shopVouchersQuery->whereBetween('created_at', [$start, $end]);
                     $shopSettlementsQuery->whereBetween('created_at', [$start, $end]);
                 }
-                
+
                 $claimedVouchers = $shopVouchersQuery->count();
                 $totalRevenue = $shopVouchersQuery->sum('points_spent') * 10;
                 $pendingSettlementAmount = $shopSettlementsQuery->where('status', 'pending')->sum('total_amount');
                 $activeProducts = UmkmProduct::where('umkm_partner_id', $partner->id)->count();
-                
+
                 $roleData = [
                     'claimed_vouchers' => $claimedVouchers,
                     'total_revenue' => $totalRevenue,
                     'pending_settlement_amount' => $pendingSettlementAmount,
                     'active_products' => $activeProducts,
                     'has_shop' => true,
-                    'store_name' => $partner->store_name
+                    'store_name' => $partner->store_name,
                 ];
             } else {
                 $roleData = ['has_shop' => false];
             }
         } elseif ($role === 'pembeli') {
             $buyerListingsQuery = WasteListing::where('buyer_id', auth()->id())->where('status', 'sold');
-            
+
             if ($start && $end) {
                 $buyerListingsQuery->whereBetween('sold_at', [$start, $end]);
             }
-            
+
             $listings = $buyerListingsQuery->get();
             $buyerWeight = 0;
             foreach ($listings as $listing) {
@@ -242,12 +243,12 @@ class DashboardDampakController extends Controller
                     $buyerWeight += array_sum($details);
                 }
             }
-            
+
             $roleData = [
                 'buyer_weight' => $buyerWeight,
                 'buyer_purchases_count' => $buyerListingsQuery->count(),
                 'buyer_spent' => $buyerListingsQuery->sum('total_price'),
-                'buyer_balance' => auth()->user()->point_balance * 10
+                'buyer_balance' => auth()->user()->cash_balance,
             ];
         }
 

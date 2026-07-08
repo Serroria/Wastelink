@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\WasteType;
-use App\Models\WasteDeposit;
 use App\Models\UmkmPartner;
 use App\Models\UmkmProduct;
+use App\Models\User;
 use App\Models\Voucher;
-use App\Models\Withdrawal;
 use App\Models\WalletTransaction;
+use App\Models\WasteDeposit;
+use App\Models\WasteType;
+use App\Models\Withdrawal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -61,23 +62,23 @@ class WargaController extends Controller
      */
     public function setor()
     {
-        //tipe daur ulang
-        \App\Models\WasteType::firstOrCreate(
+        // tipe daur ulang
+        WasteType::firstOrCreate(
             ['name' => 'Plastik (PET/HDPE)'],
             ['icon' => '🧴', 'points_per_kg' => 100, 'price_per_kg' => 1000]
         );
-        \App\Models\WasteType::firstOrCreate(
+        WasteType::firstOrCreate(
             ['name' => 'Kertas & Kardus'],
             ['icon' => '📦', 'points_per_kg' => 80, 'price_per_kg' => 800]
         );
-        \App\Models\WasteType::firstOrCreate(
+        WasteType::firstOrCreate(
             ['name' => 'Logam & Kaleng'],
             ['icon' => '🥫', 'points_per_kg' => 150, 'price_per_kg' => 1500]
         );
 
-        //organik
+        // organik
 
-        \App\Models\WasteType::firstOrCreate(
+        WasteType::firstOrCreate(
             ['name' => 'Organik (Sisa Makanan & Dapur)'],
             [
                 'icon' => '🍂',
@@ -86,8 +87,8 @@ class WargaController extends Controller
             ]
         );
 
-        //residu
-        \App\Models\WasteType::firstOrCreate(
+        // residu
+        WasteType::firstOrCreate(
             ['name' => 'Residu (Popok, Pembalut, Tissue)'],
             [
                 'icon' => '🗑️',
@@ -97,6 +98,7 @@ class WargaController extends Controller
         );
 
         $wasteTypes = WasteType::all();
+
         return view('warga.setor', compact('wasteTypes'));
     }
 
@@ -105,6 +107,19 @@ class WargaController extends Controller
      */
     public function storDeposit(Request $request)
     {
+        $request->validate([
+            'method' => ['nullable', 'string', 'in:antar,jemput'],
+            'schedule_date' => ['nullable', 'date'],
+            'address' => ['nullable', 'string', 'max:1000'],
+            'weights' => ['required', 'array'],
+            'weights.*' => ['nullable', 'numeric', 'min:0'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'photo_proof' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:4096'],
+            'captured_photo' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
         $user = Auth::user();
 
         $weightDetails = [];
@@ -132,12 +147,16 @@ class WargaController extends Controller
                 if (in_array($type, ['jpg', 'jpeg', 'png'])) {
                     $data = base64_decode($data);
                     if ($data !== false) {
-                        $fileName = 'captured_' . time() . '_' . uniqid() . '.' . $type;
-                        \Illuminate\Support\Facades\Storage::disk('public')->put('deposits/' . $fileName, $data);
-                        $photoPath = 'deposits/' . $fileName;
+                        $fileName = 'captured_'.time().'_'.uniqid().'.'.$type;
+                        Storage::disk('public')->put('deposits/'.$fileName, $data);
+                        $photoPath = 'deposits/'.$fileName;
                     }
                 }
             }
+        }
+
+        if ($weightDetails === []) {
+            return back()->with('error', 'Masukkan minimal satu berat sampah.');
         }
 
         WasteDeposit::create([
@@ -146,7 +165,7 @@ class WargaController extends Controller
             'collection_method' => $request->input('method', 'antar'),
             'schedule_date' => $request->input('schedule_date', now()->addDay()),
             'address' => $request->input('address', $user->address),
-            'weight_details' => json_encode($weightDetails),
+            'weight_details' => $weightDetails,
             'total_points' => $totalPoints,
             'notes' => $request->input('notes'),
             'latitude' => $request->input('latitude'),
@@ -163,15 +182,15 @@ class WargaController extends Controller
     public function umkm()
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
         $partners = UmkmPartner::with('products')->get();
 
         // Koordinat default Bank Sampah Lestari
-        $bankSampahName = "Bank Sampah Lestari Karawang";
-        $bankSampahAddress = "Jl. Tuparev No. 1, RT 01/RW 07, Kel. Karawang Kulon, Karawang";
+        $bankSampahName = 'Bank Sampah Lestari Karawang';
+        $bankSampahAddress = 'Jl. Tuparev No. 1, RT 01/RW 07, Kel. Karawang Kulon, Karawang';
         $bankSampahLat = -6.3024;
         $bankSampahLon = 107.3065;
 
@@ -183,38 +202,44 @@ class WargaController extends Controller
      */
     public function redeemProduct(Request $request, $productId)
     {
-        $user = Auth::user();
-        if (! $user instanceof User) {
+        if (! Auth::user() instanceof User) {
             return redirect()->route('login');
         }
-        $product = UmkmProduct::findOrFail($productId);
 
-        if ($user->point_balance < $product->points_cost) {
-            return back()->with('error', 'Saldo poin tidak mencukupi untuk menukarkan produk ini.');
+        $result = DB::transaction(function () use ($productId): array {
+            $user = User::lockForUpdate()->findOrFail(Auth::id());
+            $product = UmkmProduct::lockForUpdate()->findOrFail($productId);
+
+            if ($user->point_balance < $product->points_cost) {
+                return ['error' => 'Saldo poin tidak mencukupi untuk menukarkan produk ini.'];
+            }
+
+            if ($product->stock <= 0) {
+                return ['error' => 'Stok produk habis.'];
+            }
+
+            $user->point_balance -= $product->points_cost;
+            $user->save();
+
+            $product->stock -= 1;
+            $product->save();
+
+            $voucher = Voucher::create([
+                'user_id' => $user->id,
+                'umkm_product_id' => $product->id,
+                'code' => 'WL-'.strtoupper(Str::random(8)),
+                'points_spent' => $product->points_cost,
+                'status' => 'unused',
+            ]);
+
+            return ['voucher_code' => $voucher->code];
+        });
+
+        if (isset($result['error'])) {
+            return back()->with('error', $result['error']);
         }
 
-        if ($product->stock <= 0) {
-            return back()->with('error', 'Stok produk habis.');
-        }
-
-        // Kurangi saldo poin
-        $user->point_balance -= $product->points_cost;
-        $user->save();
-
-        // Kurangi stok
-        $product->stock -= 1;
-        $product->save();
-
-        // Buat voucher
-        $voucher = Voucher::create([
-            'user_id' => $user->id,
-            'umkm_product_id' => $product->id,
-            'code' => 'WL-' . strtoupper(Str::random(8)),
-            'points_spent' => $product->points_cost,
-            'status' => 'unused',
-        ]);
-
-        return redirect()->route('warga.dashboard')->with('success', 'Voucher berhasil dibuat! Kode: ' . $voucher->code);
+        return redirect()->route('warga.dashboard')->with('success', 'Voucher berhasil dibuat! Kode: '.$result['voucher_code']);
     }
 
     /**
@@ -222,30 +247,32 @@ class WargaController extends Controller
      */
     public function withdraw(Request $request)
     {
-        $user = Auth::user();
-        $points = (int) $request->input('points_amount', 0);
+        return DB::transaction(function () use ($request) {
+            $user = User::lockForUpdate()->findOrFail(Auth::id());
+            $points = (int) $request->input('points_amount', 0);
 
-        if ($points <= 0 || $points > $user->point_balance) {
-            return back()->with('error', 'Jumlah poin tidak valid atau melebihi saldo.');
-        }
+            if ($points <= 0 || $points > $user->point_balance) {
+                return back()->with('error', 'Jumlah poin tidak valid atau melebihi saldo.');
+            }
 
-        // 1 poin ≈ Rp 10
-        $equivalentRp = $points * 10;
+            // 1 poin ≈ Rp 10
+            $equivalentRp = $points * 10;
 
-        $user->point_balance -= $points;
-        $user->save();
+            $user->point_balance -= $points;
+            $user->save();
 
-        Withdrawal::create([
-            'user_id' => $user->id,
-            'bank_name' => $request->input('bank_name', 'BCA'),
-            'account_number' => $request->input('account_number', ''),
-            'account_name' => $request->input('account_name', $user->name),
-            'points_amount' => $points,
-            'equivalent_rp' => $equivalentRp,
-            'status' => 'pending',
-        ]);
+            Withdrawal::create([
+                'user_id' => $user->id,
+                'bank_name' => $request->input('bank_name', 'BCA'),
+                'account_number' => $request->input('account_number', ''),
+                'account_name' => $request->input('account_name', $user->name),
+                'points_amount' => $points,
+                'equivalent_rp' => $equivalentRp,
+                'status' => 'pending',
+            ]);
 
-        return redirect()->route('warga.dashboard')->with('success', 'Pengajuan pencairan tunai sebesar ' . number_format($equivalentRp, 0, ',', '.') . ' rupiah berhasil dikirim.');
+            return redirect()->route('warga.dashboard')->with('success', 'Pengajuan pencairan tunai sebesar '.number_format($equivalentRp, 0, ',', '.').' rupiah berhasil dikirim.');
+        });
     }
 
     /**
@@ -254,7 +281,7 @@ class WargaController extends Controller
     public function bills()
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -270,8 +297,7 @@ class WargaController extends Controller
      */
     public function payBill(Request $request)
     {
-        $user = Auth::user();
-        if (!$user) {
+        if (! Auth::check()) {
             return redirect()->route('login');
         }
 
@@ -287,29 +313,33 @@ class WargaController extends Controller
             return back()->with('error', 'Nominal transaksi tidak valid.');
         }
 
-        if ($user->point_balance < $pointsSpent) {
-            return back()->with('error', 'Saldo poin Anda tidak mencukupi untuk transaksi ini. Dibutuhkan ' . number_format($pointsSpent, 0, ',', '.') . ' poin.');
-        }
+        return DB::transaction(function () use ($type, $biller, $accountNumber, $nominalRp, $pointsSpent) {
+            $user = User::lockForUpdate()->findOrFail(Auth::id());
 
-        // Potong Poin Warga
-        $user->point_balance -= $pointsSpent;
-        $user->save();
+            if ($user->point_balance < $pointsSpent) {
+                return back()->with('error', 'Saldo poin Anda tidak mencukupi untuk transaksi ini. Dibutuhkan '.number_format($pointsSpent, 0, ',', '.').' poin.');
+            }
 
-        // Buat nomor referensi transaksi
-        $refNumber = 'WL' . date('YmdHis') . strtoupper(Str::random(4));
+            // Potong Poin Warga
+            $user->point_balance -= $pointsSpent;
+            $user->save();
 
-        $tx = WalletTransaction::create([
-            'user_id' => $user->id,
-            'transaction_type' => $type,
-            'biller_name' => $biller,
-            'account_number' => $accountNumber,
-            'points_spent' => $pointsSpent,
-            'nominal_rp' => $nominalRp,
-            'ref_number' => $refNumber,
-            'status' => 'success',
-        ]);
+            // Buat nomor referensi transaksi
+            $refNumber = 'WL'.date('YmdHis').strtoupper(Str::random(4));
 
-        return back()->with('receipt', $tx)->with('success', 'Transaksi ' . $biller . ' berhasil diproses!');
+            $tx = WalletTransaction::create([
+                'user_id' => $user->id,
+                'transaction_type' => $type,
+                'biller_name' => $biller,
+                'account_number' => $accountNumber,
+                'points_spent' => $pointsSpent,
+                'nominal_rp' => $nominalRp,
+                'ref_number' => $refNumber,
+                'status' => 'success',
+            ]);
+
+            return back()->with('receipt', $tx)->with('success', 'Transaksi '.$biller.' berhasil diproses!');
+        });
     }
 
     /**
@@ -318,7 +348,7 @@ class WargaController extends Controller
     public function settings()
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -331,7 +361,7 @@ class WargaController extends Controller
     public function updateSettings(Request $request)
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -391,5 +421,4 @@ class WargaController extends Controller
             Storage::disk('public')->delete($user->profile_photo);
         }
     }
-
 }

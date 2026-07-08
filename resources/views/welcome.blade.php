@@ -7,7 +7,8 @@
     <title>TIECO — Platform Digital Bank Sampah Terintegrasi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
+        if (window.tailwind) {
+            tailwind.config = {
             theme: {
                 extend: {
                     colors: {
@@ -25,6 +26,7 @@
                         serif: ['Playfair Display', 'Georgia', 'serif'],
                     }
                 }
+            }
             }
         }
     </script>
@@ -610,7 +612,7 @@
                     Seluruh keuntungan penjualan B2B sampah dialokasikan untuk subsidi pangan warga prasejahtera
                     dan beasiswa anak-anak di kelurahan.
                 </p>
-                <a href="{{ auth()->check() ? route('dampak.realtime') : route('login') }}"
+                <a href="{{ auth()->check() ? route('dampak.realtime') : route('login', ['redirect' => route('dampak.realtime', absolute: false)]) }}"
                     class="inline-block px-8 py-3.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-full text-xs transition-all shadow-md shadow-emerald-700/20 hover:scale-105 transform">
                     Lihat Laporan Dampak
                 </a>
