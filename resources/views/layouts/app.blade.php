@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="TIECO - Platform Digital Bank Sampah Terintegrasi.">
     <title>@yield('title', 'TIECO - Bank Sampah Digital')</title>
+    <link rel="icon" type="image/png" href="{{ asset('logoTieco.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>

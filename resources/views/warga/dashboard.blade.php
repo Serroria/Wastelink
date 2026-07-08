@@ -3,6 +3,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="icon" type="image/png" href="{{ asset('logoTieco.png') }}">
 <style>
     /* Premium visual styles for the voucher ticket cut-out notches */
     .ticket-notch-top {

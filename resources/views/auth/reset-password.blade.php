@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ubah Sandi Baru - TIECO</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="{{ asset('logoTieco.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -40,7 +41,7 @@
     </script>
 </head>
 <body class="bg-slate-900 min-h-[100dvh] flex items-center justify-center p-4 antialiased selection:bg-brand-500 selection:text-white relative overflow-hidden bg-cover bg-center bg-no-repeat" style="background-image: url('{{ asset('img/wplogin.jpeg') }}?v={{ time() }}');">
-    
+
     <!-- Dark Overlay for better contrast -->
     <div class="absolute inset-0 bg-black/40 pointer-events-none z-0"></div>
 
@@ -52,7 +53,7 @@
 
     <!-- Container Form -->
     <div class="w-full max-w-[360px] bg-white/95 backdrop-blur-xl rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 p-5 sm:p-6 relative z-10 animate-fade-in-up">
-        
+
         @if($errors->any())
         <div class="mb-3 p-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-[11px] sm:text-xs text-center font-medium animate-fade-in-up">
             {{ $errors->first() }}
@@ -70,7 +71,7 @@
 
         <form action="{{ route('password.update') }}" method="POST" class="space-y-3">
             @csrf
-            
+
             <input type="hidden" name="token" value="{{ $token }}">
             <input type="hidden" name="email" value="{{ $request->email }}">
 
