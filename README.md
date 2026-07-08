@@ -59,13 +59,6 @@ copy .env.example .env
 php artisan key:generate
 ```
 
-Konfigurasi SQLite lokal pada `.env`:
-
-```env
-DB_CONNECTION=sqlite
-DB_DATABASE=C:/laragon/www/ItClubProject/database/itclub.sqlite
-```
-
 Buat file database jika belum ada:
 
 ```bash
@@ -138,9 +131,8 @@ vendor/bin/pint --dirty --format agent
 
 ## Catatan Deployment
 
-Untuk demo lomba, pastikan:
+Untuk demo, pastikan:
 
-- File `.env` production tidak memakai kredensial demo sensitif.
 - Extension SQLite aktif jika menggunakan SQLite.
 - Database sudah dimigrasi dan di-seed bila perlu.
 - Server AI lokal hanya dipakai sebagai modul opsional atau disiapkan terpisah.
