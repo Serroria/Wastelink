@@ -75,6 +75,7 @@ Route::prefix('bank-sampah')->name('bank-sampah.')->middleware(['auth', 'role:ba
     Route::post('/settlement/pay/{id}', [BankSampahController::class, 'paySettlement'])->name('settlement.pay');
     Route::post('/umkm/approve/{id}', [BankSampahController::class, 'approvePartner'])->name('umkm.approve');
     Route::post('/umkm/reject/{id}', [BankSampahController::class, 'rejectPartner'])->name('umkm.reject');
+    Route::post('/accounts', [BankSampahController::class, 'storeBankSampahAccount'])->name('accounts.store');
 });
 
 // ===== UMKM MITRA =====

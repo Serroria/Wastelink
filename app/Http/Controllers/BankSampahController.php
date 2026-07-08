@@ -10,9 +10,11 @@ use App\Models\WasteDeposit;
 use App\Models\WasteListing;
 use App\Models\WasteType;
 use App\Models\Withdrawal;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class BankSampahController extends Controller
 {
@@ -32,11 +34,41 @@ class BankSampahController extends Controller
             ->get();
         $wasteTypes = WasteType::all()->keyBy('id');
         $totalWarga = User::where('role', 'warga')->count();
+        $bankSampahUsers = User::where('role', 'bank_sampah')->orderBy('name')->get();
 
         return view('bank_sampah.dashboard', compact(
             'pendingDeposits', 'approvedDeposits', 'pendingWithdrawals',
-            'pendingSettlements', 'stats', 'recentDeposits', 'wasteTypes', 'totalWarga'
+            'pendingSettlements', 'stats', 'recentDeposits', 'wasteTypes', 'totalWarga', 'bankSampahUsers'
         ));
+    }
+
+    /**
+     * Tambahkan akun Bank Sampah internal.
+     */
+    public function storeBankSampahAccount(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'address' => ['nullable', 'string', 'max:1000'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        User::create([
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'password' => Hash::make($validated['password']),
+            'role' => 'bank_sampah',
+            'point_balance' => 0,
+            'cash_balance' => 0,
+        ]);
+
+        return redirect()->route('bank-sampah.dashboard')->with('success', 'Akun Bank Sampah berhasil ditambahkan.');
     }
 
     /**

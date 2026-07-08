@@ -1,72 +1,87 @@
-# TIECO - Platform Digital Bank Sampah Terintegrasi
+# TIECO
 
-TIECO adalah aplikasi web berbasis Laravel untuk mensimulasikan ekosistem bank sampah digital yang menghubungkan warga, operator bank sampah, UMKM mitra, dan pembeli industri. Aplikasi ini dirancang untuk mendukung pengelolaan sampah terpilah, insentif poin warga, katalog voucher UMKM, penjualan stok sampah B2B, settlement, dan laporan dampak lingkungan.
+TIECO adalah sistem informasi bank sampah digital berbasis web yang menghubungkan warga, Bank Sampah, UMKM mitra, dan pembeli industri dalam satu alur ekonomi sirkular. Sistem ini membantu proses setor sampah terpilah, pencatatan poin warga, penukaran manfaat, pengelolaan stok gudang, penjualan sampah B2B, settlement UMKM, serta pelaporan dampak lingkungan dan sosial.
 
-## Fitur Utama
+## Penjelasan Sistem
 
-- Dashboard publik dampak lingkungan dan ekonomi sirkular.
-- Login demo multi-role: warga, bank sampah, UMKM, dan pembeli industri.
-- Pengajuan setor sampah warga dengan foto, berat per jenis sampah, lokasi, dan jadwal.
-- Verifikasi setoran oleh operator bank sampah dengan alur status operasional.
-- Saldo poin warga, penarikan tunai, voucher UMKM, dan pembayaran tagihan simulatif.
-- Katalog UMKM dan validasi voucher oleh mitra UMKM.
-- Klaim settlement UMKM dan pembayaran settlement oleh bank sampah.
-- Manajemen stok gudang dan listing penjualan sampah ke pembeli industri.
-- Top up saldo kas virtual pembeli industri untuk simulasi transaksi B2B.
-- Laporan dampak real-time untuk semua role.
-- Proteksi route berbasis role.
+TIECO dirancang sebagai platform operasional untuk ekosistem pengelolaan sampah bernilai ekonomi. Warga dapat mengajukan penyetoran sampah, Bank Sampah memverifikasi timbangan dan mengelola stok, UMKM menyediakan produk atau voucher yang dapat ditukar dengan poin, sedangkan pembeli industri membeli stok sampah terpilah dari Bank Sampah.
 
-## Teknologi
+Sistem memakai role-based access sehingga setiap pengguna hanya dapat mengakses fitur sesuai perannya. Alur transaksi utama tercatat di database agar saldo poin, saldo kas, stok gudang, listing B2B, dan laporan dampak tetap konsisten.
 
-- PHP 8.3+
-- Laravel 11
-- SQLite untuk database lokal
-- PHPUnit
-- Laravel Pint
-- Tailwind CSS via CDN untuk UI demo
-- Chart.js via CDN untuk grafik laporan dampak
+## Role Pengguna
 
-## Persyaratan Lokal
+- Warga: mengajukan setoran sampah, melihat poin, menukar voucher UMKM, mencairkan poin, dan membayar tagihan simulatif.
+- Bank Sampah: memverifikasi setoran, mengelola stok, membuat listing B2B, memproses withdrawal, membayar settlement UMKM, serta menambahkan akun Bank Sampah internal.
+- UMKM Mitra: mendaftarkan usaha, mengelola produk, memvalidasi voucher warga, dan mengajukan settlement.
+- Pembeli Industri: melihat listing stok sampah, top up saldo kas virtual, dan membeli stok terpilah.
 
-Pastikan extension PHP berikut aktif:
+## Fitur Sistem
 
-```bash
-pdo_sqlite
-sqlite3
-pdo_mysql atau pdo_pgsql opsional jika ingin memakai database lain
-```
+- Landing page laporan dampak publik.
+- Login, register publik, dan login demo multi-role.
+- Registrasi publik untuk Warga, UMKM, dan Pembeli Industri.
+- Proteksi route berdasarkan role pengguna.
+- Smart AI pada halaman setor sampah untuk membantu mengenali kategori sampah dari gambar atau kata kunci nama file.
+- Form setor sampah dengan foto bukti, detail berat per jenis sampah, metode pengumpulan, jadwal, alamat, dan koordinat lokasi.
+- Verifikasi setoran oleh Bank Sampah dengan update status dan penambahan poin warga.
+- Saldo poin warga, pencairan poin, voucher UMKM, dan pembayaran tagihan simulatif.
+- Manajemen UMKM mitra, produk UMKM, voucher, dan klaim settlement.
+- Manajemen stok gudang berdasarkan setoran yang sudah disetujui.
+- Listing penjualan sampah B2B ke pembeli industri.
+- Top up saldo kas virtual untuk pembeli industri.
+- Pembatalan listing stok B2B dengan pengembalian stok ke statistik gudang.
+- Halaman laporan dampak yang dapat diakses dari semua role.
+- Pengaturan profil pengguna dan foto profil.
 
-Pada Laragon, extension SQLite dapat diaktifkan di file `php.ini` dengan membuka komentar:
+## Requirement Sistem
 
-```ini
-extension=pdo_sqlite
-extension=sqlite3
-```
+- PHP 8.3 atau lebih baru.
+- Composer.
+- Node.js dan npm.
+- SQLite untuk penggunaan lokal, atau database lain yang didukung Laravel jika dikonfigurasi ulang.
+- Extension PHP:
+  - `pdo_sqlite`
+  - `sqlite3`
+  - `fileinfo`
+  - `mbstring`
+  - `openssl`
+  - `pdo`
+  - `tokenizer`
+  - `xml`
+- Browser modern seperti Chrome, Edge, atau Firefox.
+- Koneksi internet jika memakai CDN Tailwind, Bootstrap Icons, Chart.js, TensorFlow.js, MobileNet, Leaflet, dan reverse geocoding.
 
 ## Instalasi
 
-Clone repository, lalu install dependency:
+Clone repository lalu masuk ke folder project:
+
+```bash
+git clone <url-repository>
+cd ItClubProject
+```
+
+Install dependency backend dan frontend:
 
 ```bash
 composer install
 npm install
 ```
 
-Salin environment:
+Salin file environment dan buat application key:
 
 ```bash
 copy .env.example .env
 php artisan key:generate
 ```
 
-Konfigurasi SQLite lokal pada `.env`:
+Konfigurasi database SQLite di `.env`:
 
 ```env
 DB_CONNECTION=sqlite
 DB_DATABASE=C:/laragon/www/ItClubProject/database/itclub.sqlite
 ```
 
-Buat file database jika belum ada:
+Buat file database SQLite:
 
 ```bash
 type nul > database\itclub.sqlite
@@ -78,21 +93,35 @@ Jalankan migration dan seeder:
 php artisan migrate --seed
 ```
 
-Jalankan aplikasi:
+## Menjalankan Aplikasi
+
+Jalankan server Laravel:
 
 ```bash
 php artisan serve
 ```
 
-Aplikasi dapat dibuka di:
+Buka aplikasi di browser:
 
 ```text
 http://127.0.0.1:8000
 ```
 
+Jika frontend asset perlu dibundel, jalankan:
+
+```bash
+npm run build
+```
+
+Untuk mode pengembangan frontend:
+
+```bash
+npm run dev
+```
+
 ## Akun Demo
 
-Halaman login menyediakan pilihan role dan akan mengisi kredensial demo secara otomatis.
+Seeder menyediakan akun demo untuk mencoba alur sistem.
 
 | Role | Identifier | Password |
 | --- | --- | --- |
@@ -101,47 +130,40 @@ Halaman login menyediakan pilihan role dan akan mengisi kredensial demo secara o
 | UMKM | sri@tieco.id | password |
 | Pembeli Industri | daur@tieco.id | password |
 
-## Alur Demo Singkat
+## Modul Smart AI
 
-1. Login sebagai warga, ajukan setor sampah, lalu cek dashboard warga.
-2. Login sebagai bank sampah, verifikasi setoran sampai status disetujui.
-3. Buka manajemen stok, buat listing sampah untuk marketplace B2B.
-4. Login sebagai pembeli industri, top up saldo kas virtual, lalu beli listing.
-5. Login sebagai warga, tukar poin menjadi voucher UMKM.
-6. Login sebagai UMKM, validasi voucher dan ajukan settlement.
-7. Login sebagai bank sampah, bayar settlement atau approve withdrawal.
-8. Buka Laporan Dampak untuk melihat ringkasan dampak per role.
+Halaman setor sampah memiliki modul Smart AI untuk membantu mengenali jenis sampah. Deteksi dilakukan melalui beberapa lapisan:
 
-## Modul AI Deteksi Sampah
+- kata kunci nama file, misalnya `botol-plastik.jpg`, `kardus.jpg`, `kaleng.jpg`, `kaca.jpg`, atau `minyak-jelantah.jpg`;
+- respons server AI eksternal jika tersedia;
+- model MobileNet di browser sebagai fallback lokal;
+- pilihan manual jika sistem belum yakin.
 
-Halaman setor sampah memiliki modul Smart AI yang mencoba mendeteksi jenis sampah dari gambar. Backend AI diarahkan ke:
+Endpoint server AI eksternal secara default diarahkan ke:
 
 ```text
 http://127.0.0.1:5000/predict
 ```
 
-Jika server AI tidak aktif, aplikasi tetap menyediakan fallback di sisi klien dan form setor tetap dapat digunakan.
+Jika server AI tidak aktif, aplikasi tetap dapat digunakan karena deteksi fallback berjalan di sisi browser dan form setor tetap manual.
 
-## Testing
+## Testing dan Formatting
 
-Jalankan seluruh test:
+Jalankan test:
 
 ```bash
 php artisan test --compact
 ```
 
-Jalankan formatter PHP:
+Format kode PHP:
 
 ```bash
 vendor/bin/pint --dirty --format agent
 ```
 
-## Catatan Deployment
+## Catatan Konfigurasi
 
-Untuk demo lomba, pastikan:
-
-- File `.env` production tidak memakai kredensial demo sensitif.
-- Extension SQLite aktif jika menggunakan SQLite.
-- Database sudah dimigrasi dan di-seed bila perlu.
-- Server AI lokal hanya dipakai sebagai modul opsional atau disiapkan terpisah.
-- CDN Tailwind, Bootstrap Icons, dan Chart.js dapat diakses dari jaringan demo.
+- Pastikan file `.env` tidak menggunakan kredensial sensitif saat deployment.
+- Untuk SQLite di Laragon, aktifkan `extension=pdo_sqlite` dan `extension=sqlite3` pada `php.ini`.
+- Jika memakai MySQL/PostgreSQL, ubah konfigurasi `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD` sesuai server database.
+- CDN eksternal perlu dapat diakses agar UI, grafik, peta, dan model AI browser tampil optimal.

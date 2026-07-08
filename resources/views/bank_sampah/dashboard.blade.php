@@ -115,6 +115,87 @@
         </div>
     </div>
 
+    {{-- Bank Sampah Account Management --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
+            <div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <i class="bi bi-person-plus text-emerald-600 text-sm"></i> Tambah Akun Bank Sampah
+                </h3>
+                <p class="text-[10px] text-slate-400 mt-1">Buat akun internal untuk petugas atau cabang Bank Sampah.</p>
+            </div>
+
+            @if(session('success'))
+                <div class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-semibold text-red-600">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+
+            <form action="{{ route('bank-sampah.accounts.store') }}" method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                @csrf
+                <div class="sm:col-span-2 space-y-1">
+                    <label for="name" class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Nama Petugas/Cabang</label>
+                    <input type="text" id="name" name="name" value="{{ old('name') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100" required>
+                </div>
+                <div class="space-y-1">
+                    <label for="username" class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Username</label>
+                    <input type="text" id="username" name="username" value="{{ old('username') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100" required>
+                </div>
+                <div class="space-y-1">
+                    <label for="email" class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Email</label>
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100" required>
+                </div>
+                <div class="space-y-1">
+                    <label for="phone" class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Nomor HP</label>
+                    <input type="text" id="phone" name="phone" value="{{ old('phone') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+                </div>
+                <div class="space-y-1">
+                    <label for="password" class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Password</label>
+                    <input type="password" id="password" name="password" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100" required>
+                </div>
+                <div class="sm:col-span-2 space-y-1">
+                    <label for="password_confirmation" class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Konfirmasi Password</label>
+                    <input type="password" id="password_confirmation" name="password_confirmation" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100" required>
+                </div>
+                <div class="sm:col-span-2 space-y-1">
+                    <label for="address" class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Alamat</label>
+                    <textarea id="address" name="address" rows="3" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">{{ old('address') }}</textarea>
+                </div>
+                <button type="submit" class="sm:col-span-2 rounded-2xl bg-emerald-600 px-4 py-3 text-xs font-bold text-white shadow-sm transition-all hover:bg-emerald-700">
+                    Tambah Akun Bank Sampah
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <i class="bi bi-people text-emerald-600 text-sm"></i> Akun Bank Sampah Aktif
+            </h3>
+            <div class="divide-y divide-slate-100">
+                @forelse($bankSampahUsers as $bankSampahUser)
+                    <div class="py-3 flex items-start justify-between gap-3">
+                        <div>
+                            <div class="text-xs font-bold text-slate-800">{{ $bankSampahUser->name }}</div>
+                            <div class="text-[10px] text-slate-400">{{ $bankSampahUser->email }}{{ $bankSampahUser->phone ? ' - '.$bankSampahUser->phone : '' }}</div>
+                            <div class="text-[10px] text-slate-400">{{ $bankSampahUser->address ?: 'Alamat belum diisi' }}</div>
+                        </div>
+                        <span class="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                            {{ auth()->id() === $bankSampahUser->id ? 'Aktif' : 'Petugas' }}
+                        </span>
+                    </div>
+                @empty
+                    <div class="py-8 text-center text-xs text-slate-400">Belum ada akun Bank Sampah.</div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
     {{-- Recent Transactions Feed --}}
     <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5"><i class="bi bi-clock-history text-slate-400 text-sm"></i> Penyetoran Terbaru (Semua Warga)</h3>
