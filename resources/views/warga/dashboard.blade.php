@@ -3,209 +3,302 @@
 
 @section('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+    /* Premium visual styles for the voucher ticket cut-out notches */
+    .ticket-notch-top {
+        position: absolute;
+        top: 0;
+        right: 25%;
+        width: 16px;
+        height: 8px;
+        background-color: #f8fafc; /* Matches main page background */
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+        border: 1px solid #f1f5f9;
+        border-top: none;
+        transform: translateY(-1px);
+    }
+    .ticket-notch-bottom {
+        position: absolute;
+        bottom: 0;
+        right: 25%;
+        width: 16px;
+        height: 8px;
+        background-color: #f8fafc;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        border: 1px solid #f1f5f9;
+        border-bottom: none;
+        transform: translateY(1px);
+    }
+</style>
 @endsection
 
 @section('content')
-<div class="w-full space-y-6">
+@php
+    // Warm dynamic greeting based on current local time
+    $hour = date('H');
+    if ($hour < 11) {
+        $greeting = 'Selamat pagi';
+    } elseif ($hour < 15) {
+        $greeting = 'Selamat siang';
+    } elseif ($hour < 19) {
+        $greeting = 'Selamat sore';
+    } else {
+        $greeting = 'Selamat malam';
+    }
+@endphp
+
+<div class="w-full space-y-8 font-sans">
 
     {{-- Welcome header --}}
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-xl font-bold text-slate-800">Halo, {{ $user->name }}!</h1>
-            <p class="text-xs text-slate-400">Selamat datang kembali di ekosistem sirkular TIECO.</p>
+            <h1 class="text-2xl font-black text-slate-800 font-display tracking-tight">{{ $greeting }}, {{ $user->name }}!</h1>
+            <p class="text-sm text-slate-500 mt-1">Mari lanjutkan langkah baikmu hari ini untuk bumi kita.</p>
         </div>
-        <span class="text-xs px-3 py-1 bg-emerald-50 text-emerald-700 font-semibold rounded-full border border-emerald-100 shadow-sm flex items-center gap-1.5"><i class="bi bi-patch-check-fill text-emerald-600"></i> Warga Aktif</span>
-    </div>
-
-    <div class="bg-emerald-600 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
-
-        <div class="flex justify-between items-start mb-6">
-            <div>
-                <p class="text-[10px] font-semibold text-emerald-100 uppercase tracking-widest flex items-center gap-1">
-                    Saldo Poin Tabungan
-                    <i class="bi bi-info-circle text-[9px] text-emerald-200" title="1 Poin bernilai Rp 10. Dapatkan dari menyetorkan sampah terpilah."></i>
-                </p>
-                <h2 class="text-4xl font-black mt-1">{{ number_format($user->point_balance, 0, ',', '.') }} <span class="text-lg font-medium text-emerald-100">Poin</span></h2>
-            </div>
-            <div class="text-right">
-                <p class="text-[10px] font-semibold text-emerald-100 uppercase tracking-widest">Setara Rupiah</p>
-                <p class="text-lg font-bold mt-1">Rp {{ number_format($user->point_balance * 10, 0, ',', '.') }}</p>
-                <span class="text-[9px] text-emerald-100 bg-white/10 px-1.5 py-0.5 rounded">Kurs: 1 Poin = Rp 10</span>
-            </div>
-        </div>
-
-        <div class="border-t border-white/10 pt-4 flex justify-between text-xs text-emerald-100">
-            <div class="flex items-center gap-1.5"><i class="bi bi-scales"></i> Berat Sampah: <strong class="text-white">{{ number_format($totalWeight, 1, ',', '.') }} kg</strong></div>
-            <div class="flex items-center gap-1.5"><i class="bi bi-journal-check"></i> Penyetoran: <strong class="text-white">{{ $totalDeposits }} Kali</strong></div>
+        <div class="flex items-center gap-2">
+            <span class="text-xs px-3.5 py-1.5 bg-emerald-50 text-emerald-800 font-bold rounded-full border border-emerald-100 shadow-sm flex items-center gap-1.5 shrink-0"><i class="bi bi-patch-check-fill text-emerald-600"></i> Warga Aktif</span>
         </div>
     </div>
 
-    {{-- Grab-Style Services Grid --}}
-    <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Layanan Pengelolaan & Poin</h3>
-        <div class="grid grid-cols-4 gap-4 text-center">
-            <a href="{{ route('warga.setor') }}" class="group flex flex-col items-center">
-                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white rounded-2xl flex items-center justify-center text-xl transition-all shadow-sm group-hover:shadow-lg group-hover:shadow-emerald-600/20 mb-2">
-                    <i class="bi bi-recycle"></i>
-                </div>
-                <span class="text-[11px] font-bold text-slate-700 group-hover:text-emerald-600 transition-all">Setor Sampah</span>
-                <span class="text-[9px] text-slate-400 mt-0.5 hidden sm:block">Kirim/jemput sampah</span>
-            </a>
+    {{-- ASYMMETRICAL 2-COLUMN GRID --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-            <a href="{{ route('warga.bills') }}" class="group flex flex-col items-center">
-                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white rounded-2xl flex items-center justify-center text-xl transition-all shadow-sm group-hover:shadow-lg group-hover:shadow-emerald-600/20 mb-2">
-                    <i class="bi bi-phone-vibrate"></i>
-                </div>
-                <span class="text-[11px] font-bold text-slate-700 group-hover:text-emerald-600 transition-all">Pulsa & Tagihan</span>
-                <span class="text-[9px] text-slate-400 mt-0.5 hidden sm:block">Token PLN & pulsa</span>
-            </a>
+        {{-- LEFT COLUMN (2/3 width) --}}
+        <div class="lg:col-span-2 space-y-8">
 
-            <a href="{{ route('warga.umkm') }}" class="group flex flex-col items-center">
-                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white rounded-2xl flex items-center justify-center text-xl transition-all shadow-sm group-hover:shadow-lg group-hover:shadow-emerald-600/20 mb-2">
-                    <i class="bi bi-shop"></i>
-                </div>
-                <span class="text-[11px] font-bold text-slate-700 group-hover:text-emerald-600 transition-all">Katalog UMKM</span>
-                <span class="text-[9px] text-slate-400 mt-0.5 hidden sm:block">Tukar voucher belanja</span>
-            </a>
+            {{-- Hero Balance Card (Deep dark green, amber highlights, Outfit font) --}}
+            <div class="bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden border border-emerald-800/20">
+                <!-- Abstract organic vector decorations for handcrafted look -->
+                <div class="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-16 -bottom-16 w-48 h-48 rounded-full bg-teal-500/10 blur-3xl pointer-events-none"></div>
 
-            <button onclick="document.getElementById('withdrawModal').classList.remove('hidden')" class="group flex flex-col items-center w-full focus:outline-none">
-                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white rounded-2xl flex items-center justify-center text-xl transition-all shadow-sm group-hover:shadow-lg group-hover:shadow-emerald-600/20 mb-2">
-                    <i class="bi bi-cash-coin"></i>
-                </div>
-                <span class="text-[11px] font-bold text-slate-700 group-hover:text-emerald-600 transition-all">Tarik Tunai</span>
-                <span class="text-[9px] text-slate-400 mt-0.5 hidden sm:block">Cairkan saldo ke bank</span>
-            </button>
-        </div>
-    </div>
-
-    {{-- Dampak Sosial Banner --}}
-    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="flex items-start gap-4">
-            <span class="text-3xl sm:text-4xl shrink-0">🌍</span>
-            <div class="space-y-1">
-                <h4 class="text-sm font-bold text-slate-800">Laporan Dampak Sosial & Lingkungan</h4>
-                <p class="text-xs text-slate-500 leading-relaxed max-w-xl">
-                    Lihat kontribusi nyata Anda dan warga lainnya dalam menyelamatkan lingkungan, mengurangi emisi CO2, dan memberikan bantuan pangan kepada keluarga kurang mampu secara real-time.
-                </p>
-            </div>
-        </div>
-        <a href="{{ route('dampak.realtime') }}" class="shrink-0 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm shadow-emerald-600/10 hover:shadow-lg hover:shadow-emerald-600/20 hover:-translate-y-0.5 transform">
-            Lihat Laporan Dampak
-        </a>
-    </div>
-
-    {{-- Vouchers & Transaction Feeds --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {{-- Vouchers List --}}
-        <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5"><i class="bi bi-ticket-perforated text-emerald-600 text-sm"></i> Voucher Saya</h3>
-            @if($vouchers->isEmpty())
-                <div class="text-center py-8 text-slate-400 text-sm">
-                    Belum ada voucher belanja. <a href="{{ route('warga.umkm') }}" class="text-emerald-600 font-semibold underline">Tukar sekarang</a>
-                </div>
-            @else
-                <div class="space-y-3">
-                    @foreach($vouchers as $voucher)
-                        <div class="flex justify-between items-center p-3 border border-slate-50 rounded-xl hover:bg-slate-50/50 transition-all">
-                            <div>
-                                <div class="text-xs font-bold text-slate-800">{{ $voucher->product->name ?? 'Produk UMKM' }}</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">Toko: {{ $voucher->product->partner->store_name ?? '-' }}</div>
-                                <div class="text-[10px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">Kode: <span class="text-emerald-600 font-mono">{{ $voucher->code }}</span></div>
-                            </div>
-                            <div class="text-right">
-                                @if($voucher->status === 'unused')
-                                    <button onclick="openVoucherQR('{{ $voucher->code }}', '{{ $voucher->product->name }}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] transition-all shadow-sm shadow-emerald-600/10">
-                                        Lihat QR Code
-                                    </button>
-                                @else
-                                    <span class="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-md text-[10px] font-semibold uppercase tracking-wider">{{ $voucher->status }}</span>
-                                @endif
-                            </div>
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-8">
+                    <div>
+                        <p class="text-xs font-semibold text-emerald-200/80 uppercase tracking-widest flex items-center gap-1.5">
+                            Saldo Poin Tabungan
+                            <i class="bi bi-info-circle text-[10px] text-emerald-300" title="1 Poin bernilai Rp 10. Dapatkan dari menyetorkan sampah terpilah."></i>
+                        </p>
+                        <h2 class="text-5xl font-black mt-2 font-display tracking-tight flex items-baseline gap-2">
+                            {{ number_format($user->point_balance, 0, ',', '.') }}
+                            <span class="text-lg font-medium text-emerald-200">Poin</span>
+                        </h2>
+                    </div>
+                    <div class="sm:text-right shrink-0">
+                        <p class="text-xs font-semibold text-emerald-200/80 uppercase tracking-widest">Setara Rupiah</p>
+                        <div class="mt-2">
+                            <span class="bg-amber-100/90 text-amber-950 border border-amber-200/30 px-3.5 py-1.5 rounded-full font-black text-sm inline-flex items-center gap-1.5 shadow-sm">
+                                Rp {{ number_format($user->point_balance * 10, 0, ',', '.') }}
+                            </span>
                         </div>
-                    @endforeach
+                        <p class="text-[9px] text-emerald-300/75 mt-2">Kurs konversi: 1 Poin = Rp 10</p>
+                    </div>
                 </div>
-            @endif
-        </div>
 
-        {{-- Wallet/Top Up Transactions Feed --}}
-        <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5"><i class="bi bi-receipt text-emerald-600 text-sm"></i> Transaksi Pulsa & Tagihan</h3>
-            @if($walletTransactions->isEmpty())
-                <div class="text-center py-8 text-slate-400 text-sm">
-                    Belum ada transaksi top-up atau tagihan.
+                <div class="border-t border-white/10 pt-5 flex flex-wrap gap-x-8 gap-y-2 text-xs text-emerald-200">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-emerald-300"><i class="bi bi-scales"></i></div>
+                        <span>Berat Sampah: <strong class="text-white font-bold">{{ number_format($totalWeight, 1, ',', '.') }} kg</strong></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-emerald-300"><i class="bi bi-journal-check"></i></div>
+                        <span>Penyetoran: <strong class="text-white font-bold">{{ $totalDeposits }} Kali</strong></span>
+                    </div>
                 </div>
-            @else
-                <div class="space-y-3">
-                    @foreach($walletTransactions as $tx)
-                        <div class="flex justify-between items-center p-3 border border-slate-50 rounded-xl">
-                            <div>
-                                <div class="text-xs font-bold text-slate-800">{{ $tx->biller_name }} ({{ ucfirst($tx->transaction_type) }})</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">No. Pelanggan: {{ $tx->account_number }}</div>
-                                <div class="text-[9px] text-slate-400 mt-1">Ref: {{ $tx->ref_number }}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-xs font-bold text-red-500">-{{ number_format($tx->points_spent, 0, ',', '.') }} Poin</div>
-                                <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-[9px] font-bold">SUKSES</span>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-        </div>
-    </div>
-
-    {{-- Deposit History --}}
-    <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5"><i class="bi bi-clock-history text-emerald-600 text-sm"></i> Riwayat Penyetoran Sampah</h3>
-        @if($deposits->isEmpty())
-            <div class="text-center py-8 text-slate-400 text-sm">
-                Belum ada pengajuan setoran sampah.
             </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs border-collapse">
-                    <thead>
-                        <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
-                            <th class="pb-3 pr-4">Tanggal</th>
-                            <th class="pb-3 px-4">Metode</th>
-                            <th class="pb-3 px-4">Status</th>
-                            <th class="pb-3 px-4 text-center">Lacak Rute</th>
-                            <th class="pb-3 pl-4 text-right">Poin</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @foreach($deposits as $deposit)
-                            <tr class="text-slate-600">
-                                <td class="py-3 pr-4 font-medium">{{ $deposit->created_at->format('d M Y') }}</td>
-                                <td class="py-3 px-4">
-                                    @if($deposit->collection_method === 'jemput')
-                                        <span class="flex items-center gap-1.5"><i class="bi bi-truck text-emerald-600"></i> Jemput Kolektif</span>
+
+            {{-- Layanan Grid (Custom card layout using service-card blade component) --}}
+            <div class="space-y-4">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest font-display">Layanan Utama</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <x-service-card
+                        :href="route('warga.setor')"
+                        title="Setor Sampah"
+                        description="Kirim atau jemput sampah terpilahmu"
+                        icon="recycle"
+                        color="emerald"
+                        badge="Populer" />
+
+                    <x-service-card
+                        :href="route('warga.bills')"
+                        title="Pulsa & Tagihan"
+                        description="Tukar poin ke token PLN & pulsa HP"
+                        icon="phone-vibrate"
+                        color="sky" />
+
+                    <x-service-card
+                        :href="route('warga.umkm')"
+                        title="Katalog UMKM"
+                        description="Belanja produk lokal dengan voucher"
+                        icon="shop"
+                        color="indigo" />
+
+                    <x-service-card
+                        :isButton="true"
+                        onclick="document.getElementById('withdrawModal').classList.remove('hidden')"
+                        title="Tarik Tunai"
+                        description="Cairkan tabungan langsung ke rekening"
+                        icon="cash-coin"
+                        color="amber"
+                        badge="Instan" />
+                </div>
+            </div>
+
+            {{-- Riwayat Penyetoran Sampah --}}
+            <div class="bg-white border border-stone-100 rounded-3xl p-6 shadow-sm">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest font-display flex items-center gap-2">
+                        <i class="bi bi-clock-history text-emerald-600"></i> Riwayat Penyetoran
+                    </h3>
+                </div>
+
+                @if($deposits->isEmpty())
+                    <div class="text-center py-10 border border-dashed border-stone-100 rounded-2xl bg-stone-50/30">
+                        <div class="text-3xl mb-2">📦</div>
+                        <p class="text-xs text-slate-400 font-semibold">Belum ada pengajuan setoran sampah.</p>
+                        <a href="{{ route('warga.setor') }}" class="text-emerald-600 font-bold text-xs mt-1 inline-block hover:underline">Mulai setoran pertama</a>
+                    </div>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="border-b border-stone-100 text-slate-400 font-bold uppercase tracking-wider">
+                                    <th class="pb-3 pr-4">Tanggal</th>
+                                    <th class="pb-3 px-4">Metode</th>
+                                    <th class="pb-3 px-4">Status</th>
+                                    <th class="pb-3 px-4 text-center">Lacak</th>
+                                    <th class="pb-3 pl-4 text-right">Hasil</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-stone-50">
+                                @foreach($deposits as $deposit)
+                                    <tr class="text-slate-600 hover:bg-stone-50/30 transition-colors">
+                                        <td class="py-3.5 pr-4 font-bold text-slate-700">{{ $deposit->created_at->format('d M Y') }}</td>
+                                        <td class="py-3.5 px-4">
+                                            @if($deposit->collection_method === 'jemput')
+                                                <span class="flex items-center gap-1.5"><i class="bi bi-truck text-emerald-600 text-sm"></i> Jemput</span>
+                                            @else
+                                                <span class="flex items-center gap-1.5"><i class="bi bi-person-walking text-slate-500 text-sm"></i> Antar</span>
+                                            @endif
+                                        </td>
+                                        <td class="py-3.5 px-4">
+                                            <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider
+                                                @if($deposit->status === 'approved') bg-emerald-50 text-emerald-700 border border-emerald-100
+                                                @elseif($deposit->status === 'pending') bg-amber-50 text-amber-700 border border-amber-100
+                                                @else bg-red-50 text-red-700 border border-red-100 @endif">
+                                                {{ $deposit->status }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3.5 px-4 text-center">
+                                            <button data-deposit="{{ json_encode($deposit) }}" onclick="openTrackingModal(this)" class="px-2.5 py-1 bg-stone-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 font-bold rounded-lg text-[10px] transition-all flex items-center gap-1 mx-auto border border-stone-200/50 shadow-sm cursor-pointer">
+                                                <i class="bi bi-geo-alt"></i> Lacak
+                                            </button>
+                                        </td>
+                                        <td class="py-3.5 pl-4 text-right font-black text-emerald-700 font-display">+{{ number_format($deposit->total_points, 0, ',', '.') }} Poin</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- RIGHT COLUMN (1/3 width - secondary info) --}}
+        <div class="lg:col-span-1 space-y-8">
+
+            {{-- Dampak Sosial Infographic Card --}}
+            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100/50 rounded-3xl p-6 shadow-sm flex flex-col justify-between gap-6 relative overflow-hidden">
+                <div class="absolute -right-8 -bottom-8 w-24 h-24 rounded-full bg-emerald-400/5 pointer-events-none"></div>
+                <div class="space-y-3">
+                    <h4 class="text-sm font-bold text-slate-800 font-display">Dampak Sosial & Lingkungan</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Lihat kontribusi nyata langkah ramah lingkunganmu dalam menyumbangkan reduksi karbon CO2 dan dukungan sirkular secara real-time.
+                    </p>
+                </div>
+                <a href="{{ route('dampak.realtime') }}" class="w-full text-center px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition-all shadow-sm shadow-emerald-700/10 hover:shadow-md hover:shadow-emerald-700/20 hover:-translate-y-0.5 transform">
+                    Buka Laporan Dampak
+                </a>
+            </div>
+
+            {{-- Voucher Saya (Ticket styled coupon cards) --}}
+            <div class="bg-white border border-stone-100 rounded-3xl p-6 shadow-sm">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest font-display mb-5 flex items-center gap-1.5">
+                    <i class="bi bi-ticket-perforated text-emerald-600 text-sm"></i> Voucher Belanja Saya
+                </h3>
+
+                @if($vouchers->isEmpty())
+                    <div class="text-center py-8 border border-dashed border-stone-100 rounded-2xl bg-stone-50/20">
+                        <p class="text-xs text-slate-400 font-semibold mb-2">Belum ada voucher belanja.</p>
+                        <a href="{{ route('warga.umkm') }}" class="text-emerald-600 font-bold text-xs hover:underline">Tukar Poin Sekarang</a>
+                    </div>
+                @else
+                    <div class="space-y-4">
+                        @foreach($vouchers as $voucher)
+                            {{-- Paper ticket styled container --}}
+                            <div class="relative flex justify-between items-center bg-stone-50/50 border border-slate-100 rounded-2xl p-4 overflow-hidden">
+                                <!-- Notches -->
+                                <div class="ticket-notch-top"></div>
+                                <div class="ticket-notch-bottom"></div>
+
+                                <!-- Left side of the ticket -->
+                                <div class="min-w-0 pr-4 flex-1 border-r border-dashed border-slate-200">
+                                    <div class="text-xs font-extrabold text-slate-800 truncate">{{ $voucher->product->name ?? 'Produk UMKM' }}</div>
+                                    <div class="text-[10px] text-slate-400 mt-1 truncate">UMKM: {{ $voucher->product->partner->store_name ?? '-' }}</div>
+                                    <div class="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded mt-2 inline-block">
+                                        {{ $voucher->code }}
+                                    </div>
+                                </div>
+
+                                <!-- Right side of the ticket (claim / status button) -->
+                                <div class="pl-4 shrink-0 w-24 text-center">
+                                    @if($voucher->status === 'unused')
+                                        <button onclick="openVoucherQR('{{ $voucher->code }}', '{{ $voucher->product->name }}')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-[10px] transition-all shadow-sm hover:shadow-md cursor-pointer">
+                                            Scan QR
+                                        </button>
                                     @else
-                                        <span class="flex items-center gap-1.5"><i class="bi bi-person-walking text-slate-500"></i> Antar Mandiri</span>
+                                        <span class="w-full block py-1.5 bg-slate-100 text-slate-400 rounded-lg text-[9px] font-bold uppercase tracking-wider">
+                                            {{ $voucher->status }}
+                                        </span>
                                     @endif
-                                </td>
-                                <td class="py-3 px-4">
-                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider
-                                        @if($deposit->status === 'approved') bg-emerald-50 text-emerald-700
-                                        @elseif($deposit->status === 'pending') bg-amber-50 text-amber-700
-                                        @else bg-red-50 text-red-700 @endif">
-                                        {{ $deposit->status }}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4 text-center">
-                                    <button data-deposit="{{ json_encode($deposit) }}" onclick="openTrackingModal(this)" class="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 font-bold rounded-lg text-[10px] transition-all flex items-center gap-1 mx-auto shadow-sm">
-                                        <i class="bi bi-geo-alt"></i> Lacak
-                                    </button>
-                                </td>
-                                <td class="py-3 pl-4 text-right font-bold text-emerald-600">+{{ number_format($deposit->total_points, 0, ',', '.') }}</td>
-                            </tr>
+                                </div>
+                            </div>
                         @endforeach
-                    </tbody>
-                </table>
+                    </div>
+                @endif
             </div>
-        @endif
-    </div>
 
+            {{-- Transaksi Pulsa & Tagihan --}}
+            <div class="bg-white border border-stone-100 rounded-3xl p-6 shadow-sm">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest font-display mb-5 flex items-center gap-1.5">
+                    <i class="bi bi-receipt text-emerald-600 text-sm"></i> Feed Transaksi
+                </h3>
+
+                @if($walletTransactions->isEmpty())
+                    <div class="text-center py-8 border border-dashed border-stone-100 rounded-2xl bg-stone-50/20 text-xs text-slate-400 font-semibold">
+                        Belum ada transaksi top-up atau tagihan.
+                    </div>
+                @else
+                    <div class="space-y-4">
+                        @foreach($walletTransactions as $tx)
+                            <div class="flex justify-between items-start gap-4 p-3 hover:bg-stone-50/40 rounded-xl transition-colors">
+                                <div class="min-w-0">
+                                    <div class="text-xs font-bold text-slate-800 leading-tight truncate">{{ $tx->biller_name }}</div>
+                                    <div class="text-[9px] text-slate-400 mt-1 uppercase tracking-wider">No: {{ $tx->account_number }}</div>
+                                    <div class="text-[8px] text-slate-400 mt-0.5">Ref: {{ $tx->ref_number }}</div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <div class="text-xs font-black text-red-500 font-display">-{{ number_format($tx->points_spent, 0, ',', '.') }} Poin</div>
+                                    <span class="inline-block px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded-full text-[9px] font-bold mt-1">SUKSES</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
 </div>
 
 {{-- MODAL TARIK TUNAI --}}
@@ -286,7 +379,7 @@
                 </div>
             </div>
 
-            {{-- Kanan: Peta Live Route --}}
+            {{-- Rute Perjalanan Sampah --}}
             <div class="space-y-4 flex flex-col">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Rute Perjalanan Sampah</h4>
                 <div id="trackingMap" class="w-full h-64 rounded-2xl border border-slate-100 relative z-10 shadow-inner"></div>
@@ -335,96 +428,6 @@ let courierMarker = null;
 let citizenMarker = null;
 let bankMarker = null;
 let routePolyline = null;
-
-// function openTrackingModal(button) {
-//     const depositJson = button.getAttribute('data-deposit');
-//     const deposit = JSON.parse(depositJson);
-//     console.log("Tracking deposit:", deposit);
-
-//     document.getElementById('trackingModal').classList.remove('hidden');
-
-//     const timeline = document.getElementById('timelineContainer');
-//     timeline.innerHTML = '';
-
-//     const createdAt = new Date(deposit.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-//     const verifiedAt = deposit.updated_at ? new Date(deposit.updated_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-
-//     const isJemput = deposit.collection_method === 'jemput';
-//     const isApproved = deposit.status === 'approved';
-//     const isPending = deposit.status === 'pending';
-//     const isRejected = deposit.status === 'rejected';
-
-//     let steps = [
-//         {
-//             title: 'Formulir Setoran Terkirim',
-//             desc: `Warga mengajukan setoran sampah via ${isJemput ? 'Jemput Kolektif' : 'Antar Mandiri'}.`,
-//             time: createdAt,
-//             completed: true,
-//             active: isPending
-//         },
-//         {
-//             title: isJemput ? 'Petugas Menuju Lokasi' : 'Warga Membawa Sampah',
-//             desc: isJemput ? 'Kurir bank sampah sedang berangkat menjemput ke titik koordinat Anda.' : 'Silakan antarkan sampah Anda ke drop-off point Bank Sampah Lestari.',
-//             time: isPending ? 'Sedang Berjalan' : verifiedAt,
-//             completed: !isPending,
-//             active: isPending
-//         },
-//         {
-//             title: 'Tiba & Ditimbang Aktual',
-//             desc: 'Sampah berhasil diverifikasi, dipilah, dan ditimbang riil oleh operator bank sampah.',
-//             time: isApproved ? verifiedAt : '',
-//             completed: isApproved,
-//             active: isApproved
-//         },
-//         {
-//             title: 'Poin Dompet Dikreditkan',
-//             desc: `Tabungan poin +${deposit.total_points.toLocaleString('id-ID')} Poin berhasil masuk ke dompet elektronik warga.`,
-//             time: isApproved ? verifiedAt : '',
-//             completed: isApproved,
-//             active: isApproved
-//         },
-//         {
-//             title: 'Didistribusikan ke Industri Daur Ulang',
-//             desc: 'Sampah diangkut oleh mitra industri peleburan untuk dilebur menjadi bahan baku produk baru!',
-//             time: isApproved ? 'Selesai' : '',
-//             completed: isApproved,
-//             active: isApproved
-//         }
-//     ];
-
-//     if (isRejected) {
-//         steps[2] = {
-//             title: 'Pengajuan Ditolak',
-//             desc: 'Pengajuan ditolak oleh petugas karena berat timbangan tidak sesuai atau bukan sampah terpilah.',
-//             time: verifiedAt,
-//             completed: true,
-//             active: true,
-//             failed: true
-//         };
-//     }
-
-//     steps.forEach((step, idx) => {
-//         let stepHtml = `
-//             <div class="relative">
-//                 <div class="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full flex items-center justify-center border-2 text-[8px] font-bold
-//                     ${step.failed ? 'bg-red-500 border-red-500 text-white' :
-//                       (step.completed ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200')}">
-//                     ${step.failed ? '✕' : (step.completed ? '✓' : '')}
-//                 </div>
-//                 <div>
-//                     <h5 class="text-xs font-bold ${step.active ? 'text-slate-800' : 'text-slate-500'}">${step.title}</h5>
-//                     <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">${step.desc}</p>
-//                     ${step.time ? `<span class="text-[9px] font-bold text-emerald-600 block mt-1">${step.time}</span>` : ''}
-//                 </div>
-//             </div>
-//         `;
-//         timeline.innerHTML += stepHtml;
-//     });
-
-//     setTimeout(() => {
-//         initTrackingMap(deposit);
-//     }, 150);
-// }
 
 function openTrackingModal(button) {
     const depositJson = button.getAttribute('data-deposit');
@@ -495,7 +498,6 @@ function openTrackingModal(button) {
             active: true,
             failed: true
         };
-        // Potong array (buang poin dan distribusi karena gagal ditimbang)
         steps = steps.slice(0, 3);
     }
 
@@ -570,7 +572,7 @@ function initTrackingMap(deposit) {
     var distance = (trackingMap.distance([citizenLat, citizenLng], [bankLat, bankLng]) / 1000).toFixed(2);
     document.getElementById('trackingDistanceText').innerHTML = `<i class="bi bi-truck text-emerald-600"></i> Jarak ke Bank Sampah: <strong>${distance} km</strong>`;
 
-  if (['pending', 'menuju_lokasi'].includes(deposit.status) && deposit.collection_method === 'jemput') {
+    if (['pending', 'menuju_lokasi'].includes(deposit.status) && deposit.collection_method === 'jemput') {
         var courierIcon = L.divIcon({
             html: '<div class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 text-white border-2 border-white shadow-md text-sm">🚚</div>',
             className: 'custom-div-icon',
@@ -596,4 +598,3 @@ function closeTrackingModal() {
 }
 </script>
 @endsection
-

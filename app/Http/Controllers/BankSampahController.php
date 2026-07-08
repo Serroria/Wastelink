@@ -358,7 +358,7 @@ class BankSampahController extends Controller
         return redirect()->route('bank-sampah.stok')->with('success', 'Listing berhasil dibuat.');
     }
 
-    /**
+/**
      * @return array<int, float>
      */
     private function availableStockByWasteType(): array
@@ -366,13 +366,23 @@ class BankSampahController extends Controller
         $stockByType = [];
 
         WasteDeposit::where('status', 'approved')->get()->each(function (WasteDeposit $deposit) use (&$stockByType): void {
-            foreach (($deposit->weight_details ?: []) as $typeId => $weight) {
+            // Ubah string JSON menjadi array. Jika sudah array, biarkan saja.
+            $details = is_string($deposit->weight_details)
+                ? json_decode($deposit->weight_details, true)
+                : $deposit->weight_details;
+
+            foreach (($details ?: []) as $typeId => $weight) {
                 $stockByType[$typeId] = ($stockByType[$typeId] ?? 0) + (float) $weight;
             }
         });
 
         WasteListing::whereIn('status', ['available', 'sold'])->get()->each(function (WasteListing $listing) use (&$stockByType): void {
-            foreach (($listing->weight_details ?: []) as $typeId => $weight) {
+            // Lakukan hal yang sama untuk WasteListing
+            $details = is_string($listing->weight_details)
+                ? json_decode($listing->weight_details, true)
+                : $listing->weight_details;
+
+            foreach (($details ?: []) as $typeId => $weight) {
                 $stockByType[$typeId] = max(0, ($stockByType[$typeId] ?? 0) - (float) $weight);
             }
         });

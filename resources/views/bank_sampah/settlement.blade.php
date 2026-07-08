@@ -38,7 +38,7 @@
                                     <form action="{{ route('bank-sampah.settlement.withdraw', $w->id) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] transition-all">
-                                            ✅ Bayar Klaim
+                                             Bayar Klaim
                                         </button>
                                     </form>
                                 @else
@@ -53,7 +53,7 @@
 
         {{-- KLAIM SETTLEMENT UMKM --}}
         <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">🏪 Klaim Settlement UMKM Mitra</h3>
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">Klaim Settlement UMKM Mitra</h3>
 
             @if($settlements->isEmpty())
                 <div class="text-center py-12 text-slate-400 text-sm">
@@ -77,7 +77,7 @@
                                     <form action="{{ route('bank-sampah.settlement.pay', $s->id) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] transition-all">
-                                            ✅ Bayar Klaim
+                                             Bayar Klaim
                                         </button>
                                     </form>
                                 @else
@@ -93,11 +93,11 @@
     </div>
 </div>
 
-</div> {{-- Ini adalah div penutup dari <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> --}}
+{{-- </div> Ini adalah div penutup dari <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> --}}
 
     {{-- PANEL VERIFIKASI MITRA UMKM BARU --}}
-    <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">🤝 Verifikasi Kemitraan UMKM Baru</h3>
+    <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4 mt-5">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">Verifikasi Kemitraan UMKM Baru</h3>
 
         @if(!isset($pendingPartners) || $pendingPartners->isEmpty())
             <div class="text-center py-12 text-slate-400 text-sm">
@@ -135,7 +135,7 @@
                                         <form action="{{ route('bank-sampah.umkm.approve', $p->id) }}" method="POST">
                                             @csrf
                                             <button type="submit" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-[10px] transition-all shadow-sm">
-                                                ✅ Setujui
+                                                Setujui
                                             </button>
                                         </form>
                                         <form action="{{ route('bank-sampah.umkm.reject', $p->id) }}" method="POST">
