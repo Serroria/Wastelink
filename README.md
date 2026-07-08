@@ -74,19 +74,6 @@ copy .env.example .env
 php artisan key:generate
 ```
 
-Konfigurasi database SQLite di `.env`:
-
-```env
-DB_CONNECTION=sqlite
-DB_DATABASE=C:/laragon/www/ItClubProject/database/itclub.sqlite
-```
-
-Buat file database SQLite:
-
-```bash
-type nul > database\itclub.sqlite
-```
-
 Jalankan migration dan seeder:
 
 ```bash
@@ -163,7 +150,6 @@ vendor/bin/pint --dirty --format agent
 
 ## Catatan Konfigurasi
 
-- Pastikan file `.env` tidak menggunakan kredensial sensitif saat deployment.
 - Untuk SQLite di Laragon, aktifkan `extension=pdo_sqlite` dan `extension=sqlite3` pada `php.ini`.
 - Jika memakai MySQL/PostgreSQL, ubah konfigurasi `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD` sesuai server database.
 - CDN eksternal perlu dapat diakses agar UI, grafik, peta, dan model AI browser tampil optimal.
