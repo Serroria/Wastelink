@@ -688,7 +688,7 @@ function triggerAIScanner(imageSrc, filename) {
 
     laser.classList.remove('hidden');
     panel.classList.remove('hidden');
-    statusText.innerHTML = '<span class="inline-block animate-pulse text-emerald-400">🤖 AI Detektor: Menghubungi Server AI...</span>';
+    statusText.innerHTML = '<span class="inline-block animate-pulse text-emerald-400">AI Detektor: Menghubungi Server AI...</span>';
     recommendText.innerHTML = '<span class="text-slate-400 text-[10px]">Mengirim gambar ke model klasifikasi tingkat lanjut...</span>';
 
     panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -750,7 +750,7 @@ function runClientSideMobileNet(imageSrc, filename) {
     const statusText = document.getElementById('aiStatusText');
     const recommendText = document.getElementById('aiRecommendText');
 
-    statusText.innerHTML = '<span class="inline-block animate-pulse text-emerald-400">🤖 AI Detektor: Memproses Klasifikasi Lokal...</span>';
+    statusText.innerHTML = '<span class="inline-block animate-pulse text-emerald-400">AI Detektor: Memproses Klasifikasi Lokal...</span>';
     recommendText.innerHTML = '<span class="text-slate-400 text-[10px]">Menganalisis piksel gambar di browser Anda...</span>';
 
     setTimeout(() => {
@@ -837,7 +837,7 @@ function finalizeScan(detectedKeyword) {
     const dbTypeId = getWasteTypeIdByName(detectedKeyword);
 
     // Tampilkan status & detail materi sampah di panel
-    statusText.innerHTML = `🤖 AI Detektor: Terdeteksi <strong>${details.title}</strong> (Konfidensi ${confidence}%)`;
+    statusText.innerHTML = `AI Detektor: Terdeteksi <strong>${details.title}</strong> (Konfidensi ${confidence}%)`;
     recommendText.innerHTML = `
         <div class="mt-2 space-y-2 text-[10px] leading-relaxed border-t border-slate-700/60 pt-2 text-slate-300">
             <div><span class="text-[8px] bg-emerald-500/20 text-emerald-400 font-bold px-1.5 py-0.5 rounded uppercase mr-1">Golongan</span> <strong class="text-white">${details.category}</strong></div>

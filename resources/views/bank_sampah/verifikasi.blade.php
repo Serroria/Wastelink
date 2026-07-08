@@ -9,7 +9,7 @@
 <div class="w-full space-y-6">
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-xl font-bold text-slate-800">✅ Verifikasi Setoran Sampah Warga</h1>
+            <h1 class="text-xl font-bold text-slate-800"> Verifikasi Setoran Sampah Warga</h1>
             <p class="text-xs text-slate-400">Timbang ulang sampah terpilah secara riil dan berikan persetujuan untuk pemberian poin warga.</p>
         </div>
         <a href="{{ route('bank-sampah.dashboard') }}" class="text-xs font-bold text-slate-500 hover:text-emerald-600">← Dasbor</a>
