@@ -11,7 +11,7 @@ class DemoAuthController extends Controller
     /**
      * Langsung login sebagai user demo berdasarkan role.
      */
-    public function switchRole(Request $request)
+   public function switchRole(Request $request)
     {
         $validated = $request->validate([
             'role' => ['required', 'string', 'in:warga,bank_sampah,umkm,pembeli'],
@@ -19,11 +19,22 @@ class DemoAuthController extends Controller
         ]);
 
         $role = $validated['role'];
-
-        $user = User::where('role', $role)->first();
+        // $user = User::where('role', $role)->first();
+        $user = User::where('role', $role)->latest()->first();
 
         if ($user) {
+
+            if (Auth::check()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+
+            // LOGIN SEBAGAI USER BARU
             Auth::login($user);
+
+            // Generate sesi baru setelah berhasil login
+            $request->session()->regenerate();
         }
 
         if ($request->filled('redirect') && str_starts_with($request->input('redirect'), '/')) {

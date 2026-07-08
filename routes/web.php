@@ -11,14 +11,15 @@ use App\Http\Controllers\SocialiteController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\UmkmController;
 use App\Http\Controllers\WargaController;
+use App\Http\Middleware\PreventBackHistory;
 use Illuminate\Support\Facades\Route;
 
 // Halaman utama publik (Dashboard Dampak)
 Route::get('/', [DashboardDampakController::class, 'index'])->name('home');
 Route::get('/dampak/realtime', [DashboardDampakController::class, 'dampakRealtime'])->middleware('auth')->name('dampak.realtime');
 
-// Universal Settings (semua role)
-Route::middleware('auth')->group(function () {
+// Universal Settings (semua role) - TAMBAHAN: Disematkan PreventBackHistory
+Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
 });
@@ -47,7 +48,8 @@ Route::get('/reset-password/{token}', [PasswordResetController::class, 'edit'])-
 Route::post('/reset-password', [PasswordResetController::class, 'update'])->middleware('guest')->name('password.update');
 
 // ===== WARGA =====
-Route::prefix('warga')->name('warga.')->middleware(['auth', 'role:warga'])->group(function () {
+// TAMBAHAN: PreventBackHistory::class
+Route::prefix('warga')->name('warga.')->middleware(['auth', 'role:warga', PreventBackHistory::class])->group(function () {
     Route::get('/dashboard', [WargaController::class, 'dashboard'])->name('dashboard');
     Route::get('/setor', [WargaController::class, 'setor'])->name('setor');
     Route::post('/setor', [WargaController::class, 'storDeposit'])->name('setor.store');
@@ -60,10 +62,12 @@ Route::prefix('warga')->name('warga.')->middleware(['auth', 'role:warga'])->grou
     Route::post('/settings', [WargaController::class, 'updateSettings'])->name('settings.update');
 });
 
-// ai detection image
-Route::post('/warga/setor/analyze-ai', [TrashController::class, 'analyzeAi'])->name('warga.setor.analyze-ai')->middleware(['auth', 'role:warga']);
+// ai detection image - TAMBAHAN: PreventBackHistory::class
+Route::post('/warga/setor/analyze-ai', [TrashController::class, 'analyzeAi'])->name('warga.setor.analyze-ai')->middleware(['auth', 'role:warga', PreventBackHistory::class]);
+
 // ===== BANK SAMPAH =====
-Route::prefix('bank-sampah')->name('bank-sampah.')->middleware(['auth', 'role:bank_sampah'])->group(function () {
+// TAMBAHAN: PreventBackHistory::class
+Route::prefix('bank-sampah')->name('bank-sampah.')->middleware(['auth', 'role:bank_sampah', PreventBackHistory::class])->group(function () {
     Route::get('/dashboard', [BankSampahController::class, 'dashboard'])->name('dashboard');
     Route::get('/verifikasi', [BankSampahController::class, 'verifikasi'])->name('verifikasi');
     Route::post('/verifikasi/{id}', [BankSampahController::class, 'processDeposit'])->name('verifikasi.process');
@@ -79,18 +83,20 @@ Route::prefix('bank-sampah')->name('bank-sampah.')->middleware(['auth', 'role:ba
 });
 
 // ===== UMKM MITRA =====
-Route::prefix('umkm')->name('umkm.')->middleware(['auth', 'role:umkm'])->group(function () {
+// TAMBAHAN: PreventBackHistory::class
+Route::prefix('umkm')->name('umkm.')->middleware(['auth', 'role:umkm', PreventBackHistory::class])->group(function () {
     Route::get('/dashboard', [UmkmController::class, 'dashboard'])->name('dashboard');
     Route::post('/validate-voucher', [UmkmController::class, 'validateVoucher'])->name('validate-voucher');
     Route::post('/claim-settlement', [UmkmController::class, 'claimSettlement'])->name('claim-settlement');
     Route::post('/register', [UmkmController::class, 'register'])->name('register');
     Route::post('/product', [UmkmController::class, 'storeProduct'])->name('product.store');
-    Route::put('/product/{id}', [UmkmController::class, 'updateProduct'])->name('product.update'); // Baris baru
+    Route::put('/product/{id}', [UmkmController::class, 'updateProduct'])->name('product.update');
     Route::delete('/product/{id}', [UmkmController::class, 'deleteProduct'])->name('product.destroy');
 });
 
 // ===== PEMBELI INDUSTRI =====
-Route::prefix('pembeli')->name('pembeli.')->middleware(['auth', 'role:pembeli'])->group(function () {
+// TAMBAHAN: PreventBackHistory::class
+Route::prefix('pembeli')->name('pembeli.')->middleware(['auth', 'role:pembeli', PreventBackHistory::class])->group(function () {
     Route::get('/dashboard', [PembeliController::class, 'dashboard'])->name('dashboard');
     Route::post('/buy/{id}', [PembeliController::class, 'buyListing'])->name('buy');
     Route::post('/topup', [PembeliController::class, 'topup'])->name('topup');
